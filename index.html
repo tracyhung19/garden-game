@@ -1,0 +1,566 @@
+<title>Zi Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Serif+SC:wght@600&display=swap">
+<style>
+:root{
+  --bg:#EDF3EA; --surface:#FFFFFF; --surface-2:#E1EBDD; --ink:#1C3A33; --ink-2:#4A655D; --line:#C8D7C4;
+  --leaf:#3E9B5F; --stem:#4B8C4D; --soil:#8C6B4B; --soil-2:#6A4F37; --sun:#F2B632;
+  --petal:#E5677A; --ok:#2E8C58; --ok-soft:#D7F0DF; --miss:#B85A3E; --miss-soft:#F7E1D8;
+  --accent:#1E6B58; --on-accent:#FFFFFF; --focus:#2F6FD6;
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-han:"KaiTi","STKaiti","Kaiti SC","Noto Serif SC","Songti SC","SimSun",serif;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1D1A; --surface:#172A26; --surface-2:#1F3631; --ink:#E3EEE8; --ink-2:#A2BCB3; --line:#2D4A43;
+    --leaf:#5CBB7B; --stem:#62A764; --soil:#7A5D42; --soil-2:#5A4430;
+    --ok:#6CCB93; --ok-soft:#1D3F2E; --miss:#EB8D72; --miss-soft:#44261D;
+    --accent:#6FD3B4; --on-accent:#0F1D1A; --focus:#8DB8FF;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1D1A; --surface:#172A26; --surface-2:#1F3631; --ink:#E3EEE8; --ink-2:#A2BCB3; --line:#2D4A43;
+  --leaf:#5CBB7B; --stem:#62A764; --soil:#7A5D42; --soil-2:#5A4430;
+  --ok:#6CCB93; --ok-soft:#1D3F2E; --miss:#EB8D72; --miss-soft:#44261D;
+  --accent:#6FD3B4; --on-accent:#0F1D1A; --focus:#8DB8FF;
+}
+[data-flower="rose"]{--petal:#E5677A}
+[data-flower="violet"]{--petal:#9B7BD8}
+[data-flower="sky"]{--petal:#4F9FD6}
+[data-flower="orange"]{--petal:#EF8A3C}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+#app{max-width:780px;margin:0 auto;padding-inline:16px;padding-block:14px 40px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.han{font-family:var(--f-han);font-weight:600}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance}
+.muted{color:var(--ink-2)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* top bar */
+.bar{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.brand{display:flex;align-items:baseline;gap:8px}
+.brand .zi{font-size:40px;line-height:1;color:var(--accent)}
+.brand .word{font-family:var(--f-display);font-weight:800;font-size:28px}
+.swatches{display:flex;gap:8px;align-items:center}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--ink-2);font-size:14px}
+.ghost:hover{border-color:var(--ink-2);color:var(--ink)}
+
+/* play card */
+.hero{background:var(--surface);border-radius:var(--r);padding:20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 2px 0 var(--line)}
+.hero h2{font-size:26px}
+.big{background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;font-family:var(--f-display);font-weight:800;font-size:26px;padding:12px 36px;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.big:disabled{opacity:.45;cursor:default;transform:none}
+
+/* garden */
+.soilbed{margin-top:18px;background:linear-gradient(var(--surface-2),var(--surface-2));border-radius:var(--r);padding:16px}
+.soilbed h3{font-size:18px;margin-bottom:10px;color:var(--ink-2);font-weight:700}
+.garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px}
+.pot{background:var(--surface);border:0;border-radius:14px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:0}
+.pot .hz{font-size:26px;line-height:1.1}
+.pot:hover{outline:2px solid var(--line)}
+.plant{display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:4px}
+
+/* play */
+.playtop{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.dot{width:16px;height:16px;border-radius:50%;background:var(--surface-2);border:2px solid var(--line)}
+.dot.ok{background:var(--leaf);border-color:var(--leaf)}
+.dot.miss{background:var(--sun);border-color:var(--sun)}
+.dot.now{border-color:var(--ink)}
+.prompt{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:170px;justify-content:center}
+.speak{width:132px;height:132px;border-radius:50%;border:0;background:var(--petal);color:#fff;box-shadow:0 5px 0 color-mix(in srgb,var(--petal) 60%,#000);display:grid;place-items:center}
+.speak:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--petal) 60%,#000)}
+.speak svg{width:64px;height:64px}
+.bigzi{font-size:clamp(84px,24vw,128px);line-height:1}
+.py{font-family:var(--f-display);font-size:22px;color:var(--ink-2);min-height:1.4em}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.opt{background:var(--surface);border:3px solid var(--line);border-radius:var(--r);min-height:128px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.opt .pic{font-size:clamp(48px,13vw,68px);line-height:1.1}
+.opt .hz{font-size:clamp(40px,11vw,58px);line-height:1.1}
+.opt .hz.small{font-size:24px}
+.opt .en{font-family:var(--f-display);font-size:24px;font-weight:700}
+.opt .py{font-size:15px;min-height:0}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--miss);background:var(--miss-soft);opacity:.75}
+.opt:disabled{cursor:default}
+.feedback{text-align:center;margin-top:16px;min-height:64px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.feedback .say{font-family:var(--f-display);font-size:22px}
+.next{background:var(--surface);border:2px solid var(--ink);border-radius:999px;padding:6px 28px;font-family:var(--f-display);font-weight:700;font-size:20px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.opt.wrong{animation:shake .3s}
+.opt.right{animation:pop .35s}
+
+/* done */
+.done{text-align:center;display:flex;flex-direction:column;gap:18px;align-items:center}
+.done h2{font-size:34px}
+.grew{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.grew .pot{animation:pop .5s both}
+.teach{background:var(--surface);border-radius:var(--r);padding:16px;width:100%}
+.teach h3{font-size:22px;margin-bottom:10px}
+.teachgrid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tchip{background:var(--surface-2);border:3px solid transparent;border-radius:14px;padding:6px 14px;font-size:34px}
+.tchip[aria-pressed="true"]{border-color:var(--petal);background:var(--surface)}
+
+/* gate + aunty */
+.panel{background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:0 2px 0 var(--line)}
+.gate{max-width:420px;margin:30px auto;display:flex;flex-direction:column;gap:12px}
+.gate input{font-size:22px;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);width:140px}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:8px 16px;font-weight:700}
+.btn.sec{background:var(--surface-2);color:var(--ink)}
+.btn.warn{background:var(--miss);color:#fff}
+.btn.small{padding:4px 10px;font-size:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:6px 10px;font-weight:700;color:var(--ink-2)}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.aunty h2{font-size:24px}
+.aunty h3{font-size:18px;margin-bottom:8px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:var(--surface-2);border-radius:10px;padding:6px 2px;text-align:center;font-size:13px}
+.day b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.day.none{opacity:.55}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:12px;padding:6px 10px}
+.chip .han{font-size:26px;line-height:1}
+.chip small{color:var(--ink-2)}
+.miss-pill{background:var(--miss-soft);color:var(--miss);border-radius:999px;padding:0 8px;font-size:13px;font-weight:700}
+.stages{display:flex;gap:10px;flex-wrap:wrap}
+.stage{display:flex;flex-direction:column;align-items:center;font-size:13px;color:var(--ink-2)}
+.stage b{font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.ideas{background:var(--surface-2);border-radius:12px;padding:12px 14px}
+.ideas li{margin-block:4px}
+.note{font-size:14px;color:var(--ink-2)}
+.warnnote{font-size:14px;background:var(--miss-soft);color:var(--ink);border-radius:10px;padding:8px 12px}
+.words{display:flex;flex-direction:column;gap:8px}
+.wrow{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;background:var(--surface-2);border-radius:12px;padding:8px 10px}
+.wrow.off{opacity:.55}
+.wrow .han{font-size:32px;text-align:center}
+.wrow .meta{min-width:0}
+.wrow .meta .l1{font-weight:700}
+.wrow .meta .l2{font-size:13px;color:var(--ink-2)}
+.wrow .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.upl{position:relative;overflow:hidden}
+.upl input{position:absolute;inset:0;opacity:0;cursor:pointer}
+@media (max-width:520px){.wrow{grid-template-columns:52px 1fr}.wrow .acts{grid-column:1/-1;justify-content:flex-start}}
+.form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:8px;align-items:end}
+@media (max-width:620px){.form{grid-template-columns:1fr 1fr}}
+label.f{display:flex;flex-direction:column;font-size:13px;color:var(--ink-2);gap:2px}
+.f input,.f select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg);width:100%}
+textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.set{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app" data-flower="rose">
+  <section id="v-garden"></section>
+  <section id="v-play" hidden></section>
+  <section id="v-done" hidden></section>
+  <section id="v-gate" hidden></section>
+  <section id="v-aunty" class="aunty" hidden></section>
+</div>
+
+<script>
+(function(){
+const KEY='zigarden.v1';
+const INTERVAL=[0,1,2,4,7,14];
+const STAGES=['Seed','Sprout','Leafy','Bud','Flower','Full bloom'];
+const FLOWERS=[['rose','Pink flowers','#E5677A'],['violet','Purple flowers','#9B7BD8'],['sky','Blue flowers','#4F9FD6'],['orange','Orange flowers','#EF8A3C']];
+const SAMPLE=[
+ ['猫','māo','cat','🐱'],['狗','gǒu','dog','🐶'],['鱼','yú','fish','🐟'],['鸟','niǎo','bird','🐦'],
+ ['马','mǎ','horse','🐴'],['牛','niú','cow','🐮'],['羊','yáng','sheep','🐑'],['花','huā','flower','🌸'],
+ ['树','shù','tree','🌳'],['水','shuǐ','water','💧'],['火','huǒ','fire','🔥'],['山','shān','mountain','⛰️'],
+ ['雨','yǔ','rain','🌧️'],['书','shū','book','📖'],['笔','bǐ','pencil','✏️'],['手','shǒu','hand','✋'],
+ ['车','chē','car','🚗'],['蛋','dàn','egg','🥚'],['家','jiā','home','🏠'],['月亮','yuèliang','moon','🌙'],
+ ['太阳','tàiyáng','sun','☀️'],['星星','xīngxing','star','⭐'],['眼睛','yǎnjing','eyes','👀'],['耳朵','ěrduo','ears','👂'],
+ ['苹果','píngguǒ','apple','🍎'],['香蕉','xiāngjiāo','banana','🍌'],['米饭','mǐfàn','rice','🍚'],['学校','xuéxiào','school','🏫'],
+ ['妈妈','māma','mum','👩'],['爸爸','bàba','dad','👨'],['大象','dàxiàng','elephant','🐘'],['老师','lǎoshī','teacher','🧑‍🏫']
+];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+function today(){const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000);}
+function dayLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{weekday:'short',timeZone:'UTC'});}
+function dateLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{day:'numeric',month:'short',timeZone:'UTC'});}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function mkWord([hz,py,en,pic]){return {id:uid(),hz:hz.trim(),py:(py||'').trim(),en:(en||'').trim(),pic:(pic||'').trim(),active:true,box:0,due:0,seen:0,right:0,wrong:0,sample:true};}
+function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.8,sfx:true,flower:'rose',aunty:'Aunty'};}
+function fresh(){return {v:1,words:SAMPLE.map(mkWord),log:[],saved:[],settings:defaults()};}
+
+let storageOK=true;
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const s=JSON.parse(raw);
+      if(s&&s.v===1&&Array.isArray(s.words)){s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];return s;}}
+  }catch(e){storageOK=false}
+  return fresh();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
+let S=load();
+
+/* ---------- audio: recordings (IndexedDB) + Chinese computer voice ---------- */
+const audioURL=new Map(); let db=null, idbOK=false;
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open('zigarden',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('audio');
+  r.onsuccess=()=>{db=r.result;idbOK=true;res()}; r.onerror=()=>res();}catch(e){res()}});}
+function loadAudio(){return new Promise(res=>{if(!db)return res();try{
+  const req=db.transaction('audio','readonly').objectStore('audio').openCursor();
+  req.onsuccess=()=>{const c=req.result;if(c){audioURL.set(c.key,URL.createObjectURL(c.value));c.continue();}else res();};
+  req.onerror=()=>res();}catch(e){res()}});}
+function putAudio(id,blob){const old=audioURL.get(id);if(old)URL.revokeObjectURL(old);audioURL.set(id,URL.createObjectURL(blob));
+  if(db){try{db.transaction('audio','readwrite').objectStore('audio').put(blob,id)}catch(e){}}}
+function delAudio(id){const old=audioURL.get(id);if(old)URL.revokeObjectURL(old);audioURL.delete(id);
+  if(db){try{db.transaction('audio','readwrite').objectStore('audio').delete(id)}catch(e){}}}
+
+let zhVoice=null;
+function pickVoice(){try{const vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+  zhVoice=vs.find(v=>/^zh[-_]CN/i.test(v.lang))||vs.find(v=>/^cmn/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang)&&!/HK|yue/i.test(v.lang))||null;}catch(e){zhVoice=null}}
+try{pickVoice();if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{pickVoice();if(view==='aunty')renderAunty();}}catch(e){}
+const canHear=w=>audioURL.has(w.id)||!!zhVoice;
+let curAudio=null;
+function say(w){
+  try{if(curAudio){curAudio.pause();curAudio=null}if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}
+  const u=audioURL.get(w.id);
+  if(u){curAudio=new Audio(u);curAudio.play().catch(()=>{});return true;}
+  if(zhVoice){try{const ut=new SpeechSynthesisUtterance(w.hz);ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;speechSynthesis.speak(ut);return true}catch(e){}}
+  return false;
+}
+let ac=null;
+function chime(){if(!S.settings.sfx)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime;
+  [659,880].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(.0001,t+i*.11);g.gain.exponentialRampToValueAtTime(.12,t+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.11+.35);
+    o.connect(g);g.connect(ac.destination);o.start(t+i*.11);o.stop(t+i*.11+.4);});}catch(e){}}
+
+/* ---------- drawing ---------- */
+function plant(box,size){size=size||60;const b=Math.max(0,Math.min(5,box|0));
+  let s=`<svg class="plant" viewBox="0 0 64 72" width="${size}" height="${Math.round(size*72/64)}" aria-hidden="true"><ellipse cx="32" cy="64" rx="24" ry="6" fill="var(--soil)"/>`;
+  if(b===0){s+=`<ellipse cx="32" cy="60" rx="6" ry="4" fill="var(--soil-2)"/><path d="M30 57.5 q2 -3.5 4 0" stroke="var(--leaf)" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;}
+  else{const top=[0,50,40,32,26,24][b];
+    s+=`<path d="M32 62 V${top}" stroke="var(--stem)" stroke-width="3" stroke-linecap="round" fill="none"/>`;
+    const leaf=(y,k)=>`<path d="M32 ${y} q${-13*k} ${-1*k} ${-15*k} ${-12*k} q${13*k} ${-1*k} ${15*k} ${12*k}z" fill="var(--leaf)"/><path d="M32 ${y} q${13*k} ${-1*k} ${15*k} ${-12*k} q${-13*k} ${-1*k} ${-15*k} ${12*k}z" fill="var(--leaf)"/>`;
+    s+=leaf(b===1?56:54,b===1?.55:.9); if(b>=2)s+=leaf(b===2?46:44,.65);
+    if(b===3)s+=`<ellipse cx="32" cy="${top-5}" rx="5.5" ry="8" fill="var(--petal)"/><path d="M26.5 ${top-1} q5.5 4 11 0" fill="var(--leaf)"/>`;
+    if(b>=4){const r=b===5?7.5:6.5,cy=top-6;for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2-Math.PI/2;s+=`<circle cx="${(32+Math.cos(a)*r).toFixed(1)}" cy="${(cy+Math.sin(a)*r).toFixed(1)}" r="${r}" fill="var(--petal)"/>`;}
+      s+=`<circle cx="32" cy="${cy}" r="${(r*.7).toFixed(1)}" fill="var(--sun)"/>`;}
+    if(b===5){const st=(x,y)=>`<path d="M${x} ${y-5} L${x+1.4} ${y-1.4} L${x+5} ${y} L${x+1.4} ${y+1.4} L${x} ${y+5} L${x-1.4} ${y+1.4} L${x-5} ${y} L${x-1.4} ${y-1.4}Z" fill="var(--sun)"/>`;s+=st(11,14)+st(53,10);}
+  }
+  return s+'</svg>';}
+const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#fff"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+
+/* ---------- views ---------- */
+let view='garden';
+function show(v){view=v;['garden','play','done','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
+function applyFlower(){$('#app').dataset.flower=S.settings.flower;}
+const sessionsToday=()=>{const d=today();return S.log.filter(l=>l.day===d).length};
+const active=()=>S.words.filter(w=>w.active);
+
+function buildQueue(){
+  const d=today(),len=S.settings.len,act=active();
+  const due=act.filter(w=>w.seen>0&&w.due<=d).sort((a,b)=>a.due-b.due||a.box-b.box);
+  const fresh=act.filter(w=>w.seen===0);
+  let q=due.slice(0,len);
+  q=q.concat(fresh.slice(0,Math.max(0,Math.min(len-q.length,S.settings.newPer))));
+  const min=Math.min(5,act.length);
+  if(q.length<min){const extra=act.filter(w=>!q.includes(w)&&w.seen>0).sort((a,b)=>a.due-b.due||a.box-b.box);q=q.concat(extra.slice(0,min-q.length));}
+  if(q.length<min){q=q.concat(fresh.filter(w=>!q.includes(w)).slice(0,min-q.length));}
+  return shuffle(q).map(w=>w.id);
+}
+function dueCount(){const d=today(),act=active();
+  return Math.min(S.settings.len,act.filter(w=>w.seen>0&&w.due<=d).length+Math.min(S.settings.newPer,act.filter(w=>w.seen===0).length));}
+
+function renderGarden(){
+  applyFlower();
+  const left=Math.max(0,S.settings.perDay-sessionsToday());
+  const act=active();
+  const n=dueCount();
+  const resting=left<=0;
+  const msg=act.length<3?'Ask a grown-up to add some words.':resting?'Your garden is resting. Come back tomorrow!':n>0?`${n} plants need water today.`:'Everything is watered. Play for extra sunshine!';
+  $('#v-garden').innerHTML=`
+    <div class="bar">
+      <div class="brand"><span class="zi han">字</span><span class="word">Garden</span></div>
+      <div class="row">
+        <div class="swatches" role="group" aria-label="Flower colour">${FLOWERS.map(([k,l,c])=>`<button class="sw" style="background:${c}" data-flower="${k}" aria-label="${l}" aria-pressed="${S.settings.flower===k}"></button>`).join('')}</div>
+        <button class="ghost" id="to-gate">Grown-ups</button>
+      </div>
+    </div>
+    <div class="hero">
+      <div><h2>${esc(msg)}</h2><div class="muted">Tap a plant to hear its word.</div></div>
+      <button class="big" id="play" ${resting||act.length<3?'disabled':''}>Play</button>
+    </div>
+    <div class="soilbed">
+      <h3>My garden · ${act.filter(w=>w.box>=4).length} of ${act.length} in flower</h3>
+      <div class="garden">${act.map(w=>`<button class="pot" data-say="${w.id}" aria-label="${esc(w.hz)}, ${STAGES[w.box]}">${plant(w.box,58)}<span class="hz han">${esc(w.hz)}</span></button>`).join('')||'<p class="muted">No words yet.</p>'}</div>
+      <div class="legend">${STAGES.map((s,i)=>`<span>${plant(i,22)}${s}</span>`).join('')}</div>
+    </div>`;
+  $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;save();renderGarden();});
+  $('#v-garden').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{const w=S.words.find(x=>x.id===b.dataset.say);if(w)say(w);});
+  $('#to-gate').onclick=openGate;
+  const p=$('#play');if(p)p.onclick=startSession;
+}
+
+/* ---------- session ---------- */
+let sess=null;
+function qType(w){
+  let t=w.box<=1?'listen':w.box<=3?'hearchar':'read';
+  if(t!=='read'&&!canHear(w))t='read';
+  if((t==='listen'||t==='read')&&!w.pic)t=canHear(w)?'hearchar':'readen';
+  return t;
+}
+function distractors(w,t){
+  let pool=S.words.filter(x=>x.id!==w.id&&x.hz!==w.hz);
+  if(t==='listen'||t==='read')pool=pool.filter(x=>x.pic&&x.pic!==w.pic);
+  if(t==='readen')pool=pool.filter(x=>x.en&&x.en!==w.en);
+  if(t==='hearchar'){const same=pool.filter(x=>[...x.hz].length===[...w.hz].length);if(same.length>=2)pool=same;}
+  const actPool=pool.filter(x=>x.active); if(actPool.length>=2)pool=actPool;
+  return shuffle(pool).slice(0,2);
+}
+function startSession(){
+  const q=buildQueue(); if(!q.length)return;
+  sess={queue:q,i:0,total:q.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false};
+  show('play');renderQ();
+}
+const cur=()=>S.words.find(w=>w.id===sess.queue[sess.i]);
+function renderQ(){
+  const w=cur(); if(!w){finish();return;}
+  const t=qType(w); sess.t=t; sess.locked=false;
+  const opts=shuffle([w,...distractors(w,t)]);
+  const pyAlways=S.settings.pinyin==='always';
+  const dots=sess.queue.slice(0,sess.total).map((id,i)=>{const r=sess.first.get(id);return `<span class="dot ${r===true?'ok':r===false?'miss':''} ${i===Math.min(sess.i,sess.total-1)&&sess.i<sess.total?'now':''}"></span>`}).join('');
+  let prompt='';
+  if(t==='listen'||t==='hearchar')prompt=`<button class="speak" id="speak" aria-label="Hear the word again">${speakerIcon}</button><div class="py muted">Listen, then tap</div>`;
+  else prompt=`<div class="bigzi han">${esc(w.hz)}</div><div class="py">${pyAlways?esc(w.py):''}</div>`;
+  const optHTML=o=>{
+    if(t==='listen')return `<span class="pic">${esc(o.pic)}</span><span class="hz han small">${esc(o.hz)}</span>`;
+    if(t==='hearchar')return `<span class="hz han">${esc(o.hz)}</span>${pyAlways?`<span class="py">${esc(o.py)}</span>`:''}`;
+    if(t==='read')return `<span class="pic">${esc(o.pic)}</span>`;
+    return `<span class="en">${esc(o.en)}</span>`;
+  };
+  $('#v-play').innerHTML=`
+    <div class="playtop"><button class="ghost" id="stop" aria-label="Stop and go back to the garden">✕ Stop</button><div class="dots" aria-hidden="true">${dots}</div></div>
+    <div class="prompt">${prompt}</div>
+    <div class="opts">${opts.map(o=>`<button class="opt" data-id="${o.id}" aria-label="${esc(t==='read'?o.en:t==='readen'?o.en:o.hz)}">${optHTML(o)}</button>`).join('')}</div>
+    <div class="feedback" id="fb" aria-live="polite"></div>`;
+  $('#stop').onclick=()=>{finish(true)};
+  const sp=$('#speak'); if(sp){sp.onclick=()=>say(w); setTimeout(()=>say(w),250);}
+  $('#v-play').querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(b,w));
+}
+function applyResult(w,ok){
+  const d=today(),wasDue=w.seen===0||w.due<=d;
+  w.seen++;w.last=d;
+  if(ok){w.right++;if(wasDue){const nb=Math.min(5,w.box+1);if(nb>w.box)sess.grown.push(w.id);w.box=nb;w.due=d+INTERVAL[nb];}}
+  else{w.wrong++;w.box=Math.max(0,w.box-2);w.due=d+1;}
+  save();
+}
+function answer(btn,w){
+  if(sess.locked)return; sess.locked=true;
+  const ok=btn.dataset.id===w.id, firstTime=!sess.first.has(w.id);
+  if(firstTime){sess.first.set(w.id,ok);sess.results.push({id:w.id,ok,t:sess.t});applyResult(w,ok);}
+  $('#v-play').querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.dataset.id===w.id)b.classList.add('right');});
+  const showPy=S.settings.pinyin!=='never';
+  const fb=$('#fb');
+  if(ok){chime();if(sess.t==='read'||sess.t==='readen')say(w);
+    fb.innerHTML=`<div class="say"><span class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
+    setTimeout(advance,sess.t==='read'||sess.t==='readen'?1500:1100);
+  }else{
+    btn.classList.add('wrong');say(w);
+    if(!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
+    fb.innerHTML=`<div class="say">This one is <span class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div><button class="next" id="next">Next</button>`;
+    $('#next').onclick=advance; $('#next').focus();
+  }
+}
+function advance(){if(view!=='play')return;sess.i++;if(sess.i>=sess.queue.length)finish();else renderQ();}
+function finish(stopped){
+  try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}
+  if(sess&&sess.results.length){S.log.push({day:today(),ts:Date.now(),results:sess.results});if(S.log.length>400)S.log=S.log.slice(-400);save();}
+  if(stopped||!sess||!sess.results.length){sess=null;renderGarden();show('garden');return;}
+  renderDone();show('done');
+}
+function renderDone(){
+  const grown=[...new Set(sess.grown)].map(id=>S.words.find(w=>w.id===id)).filter(Boolean);
+  const words=[...new Set(sess.results.map(r=>r.id))].map(id=>S.words.find(w=>w.id===id)).filter(Boolean);
+  const name=esc(S.settings.aunty||'Aunty');
+  $('#v-done').innerHTML=`<div class="done">
+    <h2>${grown.length?'Your garden grew!':'All watered!'}</h2>
+    ${grown.length?`<div class="grew">${grown.map((w,i)=>`<div class="pot" style="animation-delay:${i*90}ms">${plant(w.box,64)}<span class="hz han">${esc(w.hz)}</span></div>`).join('')}</div>`:'<p class="muted">Tricky words come back soon so they can grow.</p>'}
+    <div class="teach"><h3>Which word will you teach ${name}?</h3>
+      <div class="teachgrid">${words.map(w=>`<button class="tchip han" data-t="${w.id}" aria-pressed="false">${esc(w.hz)}</button>`).join('')}</div>
+      <p class="muted" id="tmsg" aria-live="polite">Pick one. Show ${name} next time!</p></div>
+    <button class="big" id="home">Back to my garden</button></div>`;
+  $('#v-done').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.t,d=today();
+    $('#v-done').querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    S.saved=S.saved.filter(s=>!(s.day===d&&s.fromSess===sess.ts0));
+    S.saved.push({id,day:d,fromSess:sess.ts0});save();
+    const w=S.words.find(x=>x.id===id); if(w)say(w);
+    $('#tmsg').textContent=`Saved! Teach ${S.settings.aunty||'Aunty'} this word next time.`;
+  });
+  sess.ts0=sess.ts0||Date.now();
+  $('#home').onclick=()=>{sess=null;renderGarden();show('garden');};
+}
+
+/* ---------- grown-ups gate ---------- */
+let gateAns=0;
+function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math.random()*29);gateAns=a+b;
+  $('#v-gate').innerHTML=`<form class="panel gate" id="gform"><h2>Grown-ups only</h2><label class="f" for="gin">What is ${a} + ${b}?</label>
+    <div class="row"><input id="gin" inputmode="numeric" autocomplete="off"><button class="btn" type="submit">Open</button><button class="btn sec" type="button" id="gback">Back</button></div>
+    <p class="note" id="gmsg" aria-live="polite"></p></form>`;
+  show('gate');$('#gin').focus();
+  $('#gback').onclick=()=>show('garden');
+  $('#gform').onsubmit=e=>{e.preventDefault();if(parseInt($('#gin').value,10)===gateAns){tab='visit';renderAunty();show('aunty');}else{$('#gmsg').textContent='Not quite. Try again.';}};
+}
+
+/* ---------- grown-ups corner ---------- */
+let tab='visit';
+function renderAunty(){
+  const name=esc(S.settings.aunty||'Aunty');
+  $('#v-aunty').innerHTML=`<div class="bar"><div class="brand"><span class="zi han">字</span><span class="word">Grown-ups</span></div><button class="ghost" id="aback">Back to garden</button></div>
+    <div class="tabs" role="tablist">
+      ${[['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
+    </div><div id="tabbody"></div>`;
+  $('#aback').onclick=()=>{renderGarden();show('garden')};
+  $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderAunty();});
+  ({visit:tabVisit,words:tabWords,settings:tabSettings})[tab](name);
+}
+function wordById(id){return S.words.find(w=>w.id===id)}
+function tabVisit(name){
+  const d=today();
+  const days=[...Array(7)].map((_,i)=>d-6+i).map(n=>{const ls=S.log.filter(l=>l.day===n);const rs=ls.flatMap(l=>l.results);const ok=rs.filter(r=>r.ok).length;
+    return `<div class="day ${ls.length?'':'none'}">${dayLabel(n)}<b>${ls.length}</b>${rs.length?Math.round(ok*100/rs.length)+'%':'–'}</div>`;}).join('');
+  const miss=new Map();S.log.filter(l=>l.day>=d-13).forEach(l=>l.results.forEach(r=>{if(!r.ok)miss.set(r.id,(miss.get(r.id)||0)+1)}));
+  const tricky=[...miss.entries()].map(([id,c])=>[wordById(id),c]).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const saved=S.saved.slice(-10).reverse().map(s=>[s,wordById(s.id)]).filter(x=>x[1]);
+  const act=active(); const counts=STAGES.map((_,i)=>act.filter(w=>w.box===i).length);
+  const ideas=[];
+  if(saved.length)ideas.push(`Ask her to teach you <span class="han">${esc(saved[0][1].hz)}</span>. Play the confused student.`);
+  if(tricky.length)ideas.push(`Use ${tricky.slice(0,3).map(([w])=>`<span class="han">${esc(w.hz)}</span>`).join(', ')} in real conversation: pointing, cooking, reading signs.`);
+  const newOnes=act.filter(w=>w.seen===0).slice(0,3);
+  if(newOnes.length)ideas.push(`Coming up next in the game: ${newOnes.map(w=>`<span class="han">${esc(w.hz)}</span>`).join(', ')}. Say them out loud before she meets them.`);
+  if(!ideas.length)ideas.push('No play yet this week. Play one round together at the next visit.');
+  const recCount=S.words.filter(w=>audioURL.has(w.id)).length;
+  const warn=[];
+  if(!zhVoice)warn.push('This device has no Chinese computer voice, so words without a recording will only use reading questions. Upload recordings in Words & sounds.');
+  if(!storageOK)warn.push('This browser is not saving progress (private window or blocked storage). Progress will be lost when the page closes.');
+  if(!idbOK)warn.push('Recordings cannot be stored in this browser, so uploaded sounds last only until the page closes.');
+  $('#tabbody').innerHTML=`<div class="stack">
+    ${warn.map(w=>`<div class="warnnote">${esc(w)}</div>`).join('')}
+    <div class="panel"><h3>Ideas for your next visit</h3><ul class="ideas">${ideas.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+    <div class="panel"><h3>Last 7 days</h3><div class="days">${days}</div><p class="note">Rounds played each day, and how many answers were right first time.</p></div>
+    <div class="panel"><h3>Tricky words (last 2 weeks)</h3>${tricky.length?`<div class="chips">${tricky.map(([w,c])=>`<div class="chip"><span class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small>${esc(w.en)}</small></span><span class="miss-pill">missed ${c}</span><button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button></div>`).join('')}</div>`:'<p class="muted">No misses yet.</p>'}</div>
+    <div class="panel"><h3>Words she saved to teach ${name}</h3>${saved.length?`<div class="chips">${saved.map(([s,w],i)=>`<div class="chip"><span class="han">${esc(w.hz)}</span><small>${dateLabel(s.day)}</small><button class="btn small sec" data-unsave="${S.saved.length-1-i}">Taught</button></div>`).join('')}</div>`:'<p class="muted">Nothing saved yet. She picks one at the end of each round.</p>'}</div>
+    <div class="panel"><h3>Garden</h3><div class="stages">${counts.map((c,i)=>`<div class="stage">${plant(i,36)}<b>${c}</b>${STAGES[i]}</div>`).join('')}</div>
+      <p class="note">${act.length} active words · ${recCount} with your own recording · Chinese computer voice: ${zhVoice?esc(zhVoice.name):'not available'}. Progress and recordings stay in this browser on this device.</p></div>
+  </div>`;
+  $('#tabbody').querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.play);if(w)say(w)});
+  $('#tabbody').querySelectorAll('[data-unsave]').forEach(b=>b.onclick=()=>{S.saved.splice(+b.dataset.unsave,1);save();renderAunty();});
+}
+let confirmDel=null;
+function tabWords(){
+  const rows=S.words.map(w=>`<div class="wrow ${w.active?'':'off'}">
+      <div class="han">${esc(w.hz)}</div>
+      <div class="meta"><div class="l1">${esc(w.py)} · ${esc(w.en)} ${esc(w.pic)}</div><div class="l2">${STAGES[w.box]} · ${w.right} right, ${w.wrong} missed · ${audioURL.has(w.id)?'your recording':'computer voice'}</div></div>
+      <div class="acts">
+        <button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button>
+        <label class="btn small sec upl">${audioURL.has(w.id)?'Replace sound':'Add sound'}<input type="file" accept="audio/*" data-up="${w.id}" id="up-${w.id}"></label>
+        ${audioURL.has(w.id)?`<button class="btn small sec" data-rmsnd="${w.id}">Remove sound</button>`:''}
+        <button class="btn small sec" data-toggle="${w.id}">${w.active?'Pause':'Use'}</button>
+        ${confirmDel===w.id?`<button class="btn small warn" data-del="${w.id}">Delete</button><button class="btn small sec" data-nodel="1">Keep</button>`:`<button class="btn small sec" data-askdel="${w.id}">Delete…</button>`}
+      </div></div>`).join('');
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div class="panel"><h3>Add a word</h3>
+      <form class="form" id="addf">
+        <label class="f">Chinese<input id="a-hz" required maxlength="8" placeholder="雨"></label>
+        <label class="f">Pinyin<input id="a-py" placeholder="yǔ"></label>
+        <label class="f">Meaning<input id="a-en" placeholder="rain"></label>
+        <label class="f">Picture (emoji)<input id="a-pic" maxlength="12" placeholder="🌧️"></label>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <p class="note">Use words from her tuition and school lists. Words without a picture still work: she hears the word and picks the characters.</p>
+    </div>
+    <div class="panel"><h3>Add many at once</h3>
+      <textarea id="bulk" placeholder="One word per line: Chinese | pinyin | meaning | emoji&#10;雨 | yǔ | rain | 🌧️&#10;大 | dà | big"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="bulkadd">Add these</button><span class="note" id="bulkmsg" aria-live="polite"></span></div>
+    </div>
+    <div class="panel"><h3>Words (${S.words.length})</h3>
+      <p class="note">Record each word on your phone (voice memo), then use Add sound. Paused words stay in the list but leave the game.</p>
+      <div class="words">${rows||'<p class="muted">No words yet.</p>'}</div></div></div>`;
+  $('#addf').onsubmit=e=>{e.preventDefault();const hz=$('#a-hz').value.trim();if(!hz)return;
+    const w=mkWord([hz,$('#a-py').value,$('#a-en').value,$('#a-pic').value]);w.sample=false;S.words.push(w);save();renderAunty();};
+  $('#bulkadd').onclick=()=>{let n=0;$('#bulk').value.split(/\n/).forEach(line=>{const p=line.split(/\s*[|\t]\s*/);if(p[0]&&p[0].trim()){const w=mkWord([p[0],p[1],p[2],p[3]]);w.sample=false;S.words.push(w);n++;}});
+    save();renderAunty();$('#bulkmsg').textContent=n?`Added ${n} words.`:'Nothing to add. Put one word per line.';};
+  const tb=$('#tabbody');
+  tb.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.play);if(w&&!say(w))b.textContent='No sound';});
+  tb.querySelectorAll('[data-up]').forEach(inp=>inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;putAudio(inp.dataset.up,f);renderAunty();const w=wordById(inp.dataset.up);if(w)say(w);});
+  tb.querySelectorAll('[data-rmsnd]').forEach(b=>b.onclick=()=>{delAudio(b.dataset.rmsnd);renderAunty();});
+  tb.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.toggle);w.active=!w.active;save();renderAunty();});
+  tb.querySelectorAll('[data-askdel]').forEach(b=>b.onclick=()=>{confirmDel=b.dataset.askdel;renderAunty();});
+  tb.querySelectorAll('[data-nodel]').forEach(b=>b.onclick=()=>{confirmDel=null;renderAunty();});
+  tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const id=b.dataset.del;S.words=S.words.filter(w=>w.id!==id);S.saved=S.saved.filter(s=>s.id!==id);delAudio(id);confirmDel=null;save();renderAunty();});
+}
+let confirmReset=null;
+function tabSettings(){
+  const st=S.settings;
+  const sel=(id,label,val,opts)=>`<label class="f" for="${id}">${label}<select id="${id}">${opts.map(([v,l])=>`<option value="${v}" ${String(v)===String(val)?'selected':''}>${l}</option>`).join('')}</select></label>`;
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div class="panel"><h3>Game</h3><div class="set">
+      <label class="f" for="s-aunty">What she calls you<input id="s-aunty" value="${esc(st.aunty)}" maxlength="20"></label>
+      ${sel('s-len','Questions per round',st.len,[[6,'6'],[8,'8'],[10,'10'],[12,'12']])}
+      ${sel('s-new','New words per round',st.newPer,[[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']])}
+      ${sel('s-day','Rounds per day',st.perDay,[[1,'1'],[2,'2'],[3,'3'],[99,'No limit']])}
+      ${sel('s-py','Show pinyin',st.pinyin,[['after','After she answers'],['always','Always'],['never','Never']])}
+      ${sel('s-rate','Computer voice speed',st.rate,[[0.65,'Slow'],[0.8,'Gentle'],[1,'Normal']])}
+      ${sel('s-sfx','Happy sound on right answers',st.sfx,[[true,'On'],[false,'Off']])}
+    </div><p class="note" id="smsg" aria-live="polite"></p></div>
+    <div class="panel"><h3>How words move</h3><p class="note">New words start as seeds. Each first-try right answer grows the plant one stage and waits longer before asking again: tomorrow, then 2, 4, 7 and 14 days. A miss drops it back two stages and asks again tomorrow. Early stages ask her to listen and pick a picture; middle stages ask her to listen and pick the characters; flowers ask her to read the characters with no sound.</p></div>
+    <div class="panel"><h3>Backup</h3>
+      <p class="note">Copy the backup text and keep it in your notes. Recordings are not included; keep your voice memos on your phone.</p>
+      <div class="row"><button class="btn" id="bk-copy">Copy backup</button><span class="note" id="bkmsg" aria-live="polite"></span></div>
+      <textarea id="bk" style="margin-top:8px" placeholder="Backup text appears here. To restore, paste a backup here and choose Restore."></textarea>
+      <div class="row" style="margin-top:8px">${confirmReset==='restore'?`<button class="btn warn" id="bk-restore-yes">Replace everything with this backup</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="bk-restore">Restore…</button>`}</div>
+    </div>
+    <div class="panel"><h3>Start over</h3><div class="row">
+      ${confirmReset==='progress'?`<button class="btn warn" id="rp-yes">Reset all plants to seeds</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rp">Reset progress…</button>`}
+      ${confirmReset==='sample'?`<button class="btn warn" id="rs-yes">Delete my words and load samples</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rs">Load sample words…</button>`}
+    </div></div></div>`;
+  const bind=(id,key,conv)=>{$(id).onchange=()=>{S.settings[key]=conv($(id).value);save();$('#smsg').textContent='Saved.';}};
+  bind('#s-len','len',Number);bind('#s-new','newPer',Number);bind('#s-day','perDay',Number);bind('#s-py','pinyin',String);bind('#s-rate','rate',Number);bind('#s-sfx','sfx',v=>v==='true');
+  $('#s-aunty').oninput=()=>{S.settings.aunty=$('#s-aunty').value.trim()||'Aunty';save();};
+  $('#bk-copy').onclick=()=>{const txt=JSON.stringify(S);$('#bk').value=txt;
+    const done=()=>{$('#bkmsg').textContent='Copied.'};
+    try{navigator.clipboard.writeText(txt).then(done,()=>{$('#bk').select();$('#bkmsg').textContent='Select all and copy the text below.'})}catch(e){$('#bk').select();$('#bkmsg').textContent='Select all and copy the text below.'}};
+  const c=$('#cancel');if(c)c.onclick=()=>{confirmReset=null;renderAunty();};
+  const r=$('#bk-restore');if(r)r.onclick=()=>{confirmReset='restore';const keep=$('#bk').value;renderAunty();$('#bk').value=keep;};
+  const ry=$('#bk-restore-yes');if(ry)ry.onclick=()=>{try{const s=JSON.parse($('#bk').value);if(!s||s.v!==1||!Array.isArray(s.words))throw 0;
+      s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];S=s;save();confirmReset=null;renderAunty();$('#bkmsg').textContent='Restored.';}
+    catch(e){$('#bkmsg').textContent='That text is not a Zi Garden backup. Paste the whole backup and try again.';}};
+  const rp=$('#rp');if(rp)rp.onclick=()=>{confirmReset='progress';renderAunty();};
+  const rpy=$('#rp-yes');if(rpy)rpy.onclick=()=>{S.words.forEach(w=>Object.assign(w,{box:0,due:0,seen:0,right:0,wrong:0}));S.log=[];S.saved=[];save();confirmReset=null;renderAunty();};
+  const rs=$('#rs');if(rs)rs.onclick=()=>{confirmReset='sample';renderAunty();};
+  const rsy=$('#rs-yes');if(rsy)rsy.onclick=()=>{S.words.forEach(w=>delAudio(w.id));const st2=S.settings;S=fresh();S.settings=st2;save();confirmReset=null;renderAunty();};
+}
+
+/* ---------- boot ---------- */
+async function start(){
+  applyFlower();renderGarden();show('garden');
+  await openDB();await loadAudio();
+  if(view==='garden')renderGarden();
+}
+try{ if(window.claude&&window.claude.hot&&window.claude.hot.ready){window.claude.hot.ready(start)}else{start()} }catch(e){start()}
+})();
+</script>
