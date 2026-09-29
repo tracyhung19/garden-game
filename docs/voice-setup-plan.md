@@ -25,7 +25,7 @@ Web access worked for GitHub READMEs and search. huggingface.co was **blocked** 
 
 ## 2. Prerequisites and machine check
 
-Run on the family Mac (Terminal). Paste the output back before doing anything else.
+Run on the family Mac (Terminal). The same checks, plus tool versions and a verdict, are in `scripts/machine-check.sh`: it changes nothing and copies its report to the clipboard. Paste the output back before doing anything else.
 
 ```bash
 uname -m                                   # arm64 = Apple Silicon, x86_64 = Intel
