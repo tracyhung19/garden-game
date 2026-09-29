@@ -101,6 +101,13 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 .feedback{text-align:center;margin-top:16px;min-height:64px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .feedback .say{font-family:var(--f-display);font-size:22px}
 .previewtag{margin:-8px 0 10px;font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:4px 10px;display:inline-block}
+.recword{display:flex;gap:16px;align-items:center;justify-content:center;margin:8px 0 14px}
+.recword .han{font-size:64px;line-height:1}
+.recword>span:last-child{font-family:var(--f-display);font-size:22px;line-height:1.2}
+.recbtn{border:0;border-radius:999px;background:var(--miss);color:#fff;font-weight:700;font-size:20px;padding:10px 26px}
+.recbtn.on{background:var(--ink);color:var(--bg);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.65}}
+#rec-filter{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg)}
 .next{background:var(--surface);border:2px solid var(--ink);border-radius:999px;padding:6px 28px;font-family:var(--f-display);font-weight:700;font-size:20px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
@@ -215,7 +222,7 @@ function dayLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{w
 function dateLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{day:'numeric',month:'short',timeZone:'UTC'});}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function mkWord([hz,py,en,pic,sen]){return {id:uid(),hz:hz.trim(),py:(py||'').trim(),en:(en||'').trim(),pic:(pic||'').trim(),sen:(sen||'').trim(),active:true,box:0,due:0,seen:0,right:0,wrong:0,sample:true};}
-function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.8,sfx:true,flower:'rose',aunty:'Aunty',level:'standard'};}
+function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.6,pitch:1,voice:'',voiceV:2,sfx:true,flower:'rose',aunty:'Aunty',level:'standard'};}
 function fresh(){return {v:1,words:SAMPLE.map(mkWord),log:[],saved:[],settings:defaults()};}
 
 let storageOK=true;
@@ -223,7 +230,7 @@ function load(){
   try{
     const raw=localStorage.getItem(KEY);
     if(raw){const s=JSON.parse(raw);
-      if(s&&s.v===1&&Array.isArray(s.words)){s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];return s;}}
+      if(s&&s.v===1&&Array.isArray(s.words)){if(s.settings&&!s.settings.voiceV){if(s.settings.rate===0.8)s.settings.rate=0.6;s.settings.voiceV=2;}s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];return s;}}
   }catch(e){storageOK=false}
   return fresh();
 }
@@ -244,29 +251,97 @@ function putAudio(id,blob){const old=audioURL.get(id);if(old)URL.revokeObjectURL
 function delAudio(id){const old=audioURL.get(id);if(old)URL.revokeObjectURL(old);audioURL.delete(id);
   if(db){try{db.transaction('audio','readwrite').objectStore('audio').delete(id)}catch(e){}}}
 
-let zhVoice=null;
+let zhVoice=null,zhVoices=[],curAudio=null;
+const FEMALE=/xiaoxiao|xiaoyi|xiaohan|xiaomo|xiaoxuan|xiaorui|xiaoshuang|xiaoyan|tingting|ting-ting|huihui|yaoyao|lili|yu-shu|yushu|meijia|mei-jia|google\s*普通话|female|女/i;
+const MALE=/kangkang|yunxi|yunyang|yunjian|yunxia|yunze|li-mu|limu|\bmale\b|男/i;
+function voiceScore(v){let n=0;
+  if(/^zh[-_]CN/i.test(v.lang)||/^cmn/i.test(v.lang))n+=2;
+  if(MALE.test(v.name))n-=4;
+  if(FEMALE.test(v.name))n+=3;
+  if(/natural|online|premium|enhanced/i.test(v.name))n+=1;
+  return n;}
 function pickVoice(){try{const vs=window.speechSynthesis?speechSynthesis.getVoices():[];
-  zhVoice=vs.find(v=>/^zh[-_]CN/i.test(v.lang))||vs.find(v=>/^cmn/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang)&&!/HK|yue/i.test(v.lang))||null;}catch(e){zhVoice=null}}
+  zhVoices=vs.filter(v=>(/^zh/i.test(v.lang)||/^cmn/i.test(v.lang))&&!/HK|yue|MO/i.test(v.lang));
+  zhVoice=zhVoices.find(v=>v.name===S.settings.voice)||zhVoices.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;}catch(e){zhVoice=null;zhVoices=[]}}
 try{pickVoice();if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{pickVoice();if(view==='aunty')renderAunty();}}catch(e){}
 const canHear=w=>audioURL.has(w.id)||!!zhVoice;
-function saySentence(w){
-  if(zhVoice){try{
-    if(curAudio){curAudio.pause();curAudio=null}
-    if(window.speechSynthesis)speechSynthesis.cancel();
-    const text=w.sen.replace(/＿/g,w.hz);
-    const ut=new SpeechSynthesisUtterance(text);ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;
-    speechSynthesis.speak(ut);return;
-  }catch(e){}}
-  say(w);
-}
-let curAudio=null;
+function hush(){try{if(curAudio){curAudio.pause();curAudio=null}if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}}
+function speakText(text){if(!zhVoice)return false;try{hush();const ut=new SpeechSynthesisUtterance(text);
+  ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){return false}}
+function saySentence(w){if(!speakText(w.sen.replace(/＿/g,w.hz)))say(w);}
 function say(w){
-  try{if(curAudio){curAudio.pause();curAudio=null}if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}
+  hush();
   const u=audioURL.get(w.id);
   if(u){curAudio=new Audio(u);curAudio.play().catch(()=>{});return true;}
-  if(zhVoice){try{const ut=new SpeechSynthesisUtterance(w.hz);ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;speechSynthesis.speak(ut);return true}catch(e){}}
-  return false;
+  return speakText(w.hz);
 }
+
+/* ---------- in-page recording (needs the game on its own web address) ---------- */
+const rec={open:false,ids:[],i:0,status:'idle',msg:'',filter:'missing'};
+let mediaRec=null,recStream=null,recTimer=null;
+const canRecord=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+function recMime(){try{return ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t))||''}catch(e){return ''}}
+function openRecorder(startId){
+  rec.ids=(startId||rec.filter==='all'?S.words:S.words.filter(w=>!audioURL.has(w.id))).map(w=>w.id);
+  rec.i=startId?Math.max(0,rec.ids.indexOf(startId)):0;rec.open=true;rec.status='idle';rec.msg='';
+  renderAunty();const el=$('#rec-panel');if(el)el.scrollIntoView({block:'nearest'});
+}
+function stopTracks(){try{if(recStream)recStream.getTracks().forEach(t=>t.stop())}catch(e){}recStream=null;}
+function cancelRec(){clearTimeout(recTimer);try{if(mediaRec&&mediaRec.state!=='inactive'){mediaRec.onstop=null;mediaRec.stop();}}catch(e){}
+  mediaRec=null;stopTracks();rec.open=false;rec.status='idle';rec.msg='';}
+async function startRec(){
+  const w=wordById(rec.ids[rec.i]);if(!w)return;
+  hush();
+  try{recStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}
+  catch(e){rec.status='error';rec.msg='The microphone is blocked here. Open the game from its own web address (for example GitHub Pages) and allow the microphone when asked. You can still use Add sound to upload voice memos.';renderAunty();return;}
+  const chunks=[],mt=recMime();
+  try{mediaRec=mt?new MediaRecorder(recStream,{mimeType:mt}):new MediaRecorder(recStream);}catch(e){mediaRec=new MediaRecorder(recStream);}
+  const type=mediaRec.mimeType||mt||'audio/webm';
+  mediaRec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  mediaRec.onstop=()=>{clearTimeout(recTimer);stopTracks();mediaRec=null;
+    const blob=new Blob(chunks,{type});
+    if(blob.size<800){rec.status='error';rec.msg='That was too short. Tap Record, then say the word.';renderAunty();return;}
+    putAudio(w.id,blob);rec.status='saved';rec.msg='';renderAunty();say(w);};
+  mediaRec.start();rec.status='recording';rec.msg='';renderAunty();
+  recTimer=setTimeout(stopRec,6000);
+}
+function stopRec(){try{if(mediaRec&&mediaRec.state==='recording')mediaRec.stop()}catch(e){}}
+function recPanel(){
+  if(!rec.open)return `<div class="panel" id="rec-panel"><h3>Record words</h3>
+    <p class="note">Say each word slowly and clearly, the way you would say it to her. Recordings always play instead of the computer voice.${canRecord()?'':' This browser cannot record, so use Add sound to upload voice memos.'}</p>
+    <div class="row" style="margin-top:8px"><button class="btn" id="rec-open" ${canRecord()?'':'disabled'}>Record words one by one</button>
+      <select id="rec-filter" aria-label="Which words to record"><option value="missing" ${rec.filter==='missing'?'selected':''}>Only words without a recording</option><option value="all" ${rec.filter==='all'?'selected':''}>All words</option></select></div></div>`;
+  const w=wordById(rec.ids[rec.i]);
+  if(!w)return `<div class="panel" id="rec-panel"><h3>Record words</h3><p>All done. Every word in this list has been through.</p><div class="row"><button class="btn sec" id="rec-close">Close</button></div></div>`;
+  const has=audioURL.has(w.id),busy=rec.status==='recording';
+  const main=busy?`<button class="recbtn on" id="rec-stop">■ Stop</button>`:`<button class="recbtn" id="rec-start">● ${has?'Record again':'Record'}</button>`;
+  const say=busy?'Recording. Say the word, then tap Stop. It stops by itself after 6 seconds.':rec.status==='saved'?'Saved. Listen, then go to the next word or record again.':'';
+  return `<div class="panel" id="rec-panel"><h3>Record words · ${rec.i+1} of ${rec.ids.length}</h3>
+    <div class="recword"><span class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small class="muted">${esc(w.en)} ${esc(w.pic)}</small></span></div>
+    <div class="row" style="justify-content:center">${main}<button class="btn sec" id="rec-play" ${has&&!busy?'':'disabled'}>▶ Play</button></div>
+    <p class="note" aria-live="polite" style="text-align:center">${say}</p>${rec.msg?`<p class="warnnote">${esc(rec.msg)}</p>`:''}
+    <div class="row" style="justify-content:space-between"><button class="btn sec" id="rec-prev" ${rec.i>0&&!busy?'':'disabled'}>← Back</button><button class="btn sec" id="rec-close">Done</button><button class="btn" id="rec-next" ${busy?'disabled':''}>Next word →</button></div></div>`;
+}
+function bindRec(){
+  const on=(id,f)=>{const el=$(id);if(el)el.onclick=f;};
+  on('#rec-open',()=>openRecorder());
+  const f=$('#rec-filter');if(f)f.onchange=()=>{rec.filter=f.value;};
+  on('#rec-start',startRec);on('#rec-stop',stopRec);
+  on('#rec-play',()=>{const w=wordById(rec.ids[rec.i]);if(w)say(w);});
+  on('#rec-next',()=>{rec.i++;rec.status='idle';rec.msg='';renderAunty();});
+  on('#rec-prev',()=>{rec.i=Math.max(0,rec.i-1);rec.status='idle';rec.msg='';renderAunty();});
+  on('#rec-close',()=>{cancelRec();renderAunty();});
+}
+
+/* ---------- backup with recordings ---------- */
+function getAudioBlob(id){return new Promise(res=>{if(!db)return res(null);try{const r=db.transaction('audio','readonly').objectStore('audio').get(id);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null);}catch(e){res(null)}});}
+function blobToDataURL(b){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res(null);fr.readAsDataURL(b);});}
+function dataURLToBlob(u){const m=/^data:([^;,]*)(;base64)?,(.*)$/.exec(u||'');if(!m)return null;
+  const bin=m[2]?atob(m[3]):decodeURIComponent(m[3]);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  return new Blob([a],{type:m[1]||'audio/webm'});}
+async function backupText(){const audio={};
+  for(const w of S.words){if(!audioURL.has(w.id))continue;const b=await getAudioBlob(w.id);if(b){const d=await blobToDataURL(b);if(d)audio[w.id]=d;}}
+  return JSON.stringify(Object.assign({},S,{audio}));}
 let ac=null;
 function chime(){if(!S.settings.sfx)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime;
   [659,880].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;
@@ -640,7 +715,7 @@ function renderAunty(){
     <div class="tabs" role="tablist">
       ${[['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
     </div><div id="tabbody"></div>`;
-  $('#aback').onclick=()=>{renderGarden();show('garden')};
+  $('#aback').onclick=()=>{cancelRec();renderGarden();show('garden')};
   $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderAunty();});
   ({visit:tabVisit,words:tabWords,settings:tabSettings})[tab](name);
 }
@@ -691,12 +766,14 @@ function tabWords(){
       <div class="meta"><div class="l1">${esc(w.py)} · ${esc(w.en)} ${esc(w.pic)}</div><div class="l2">${STAGES[w.box]} · ${w.right} right, ${w.wrong} missed · ${audioURL.has(w.id)?'your recording':'computer voice'}</div>${senLine}</div>
       <div class="acts">
         <button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button>
+        ${canRecord()?`<button class="btn small sec" data-rec="${w.id}">● Record</button>`:''}
         <label class="btn small sec upl">${audioURL.has(w.id)?'Replace sound':'Add sound'}<input type="file" accept="audio/*" data-up="${w.id}" id="up-${w.id}"></label>
         ${audioURL.has(w.id)?`<button class="btn small sec" data-rmsnd="${w.id}">Remove sound</button>`:''}
         <button class="btn small sec" data-toggle="${w.id}">${w.active?'Pause':'Use'}</button>
         ${confirmDel===w.id?`<button class="btn small warn" data-del="${w.id}">Delete</button><button class="btn small sec" data-nodel="1">Keep</button>`:`<button class="btn small sec" data-askdel="${w.id}">Delete…</button>`}
       </div></div>`;}).join('');
   $('#tabbody').innerHTML=`<div class="stack">
+    ${recPanel()}
     <div class="panel"><h3>Add a word</h3>
       <form class="form" id="addf">
         <label class="f">Chinese<input id="a-hz" required maxlength="8" placeholder="雨"></label>
@@ -713,13 +790,15 @@ function tabWords(){
       <div class="row" style="margin-top:8px"><button class="btn" id="bulkadd">Add these</button><span class="note" id="bulkmsg" aria-live="polite"></span></div>
     </div>
     <div class="panel"><h3>Words (${S.words.length})</h3>
-      <p class="note">Record each word on your phone (voice memo), then use Add sound. Paused words stay in the list but leave the game.</p>
+      <p class="note">Use ● Record to record a word here, or record a voice memo on your phone and use Add sound. Paused words stay in the list but leave the game.</p>
       <div class="words">${rows||'<p class="muted">No words yet.</p>'}</div></div></div>`;
   $('#addf').onsubmit=e=>{e.preventDefault();const hz=$('#a-hz').value.trim();if(!hz)return;
     const w=mkWord([hz,$('#a-py').value,$('#a-en').value,$('#a-pic').value,$('#a-sen').value]);w.sample=false;S.words.push(w);save();renderAunty();};
   $('#bulkadd').onclick=()=>{let n=0;$('#bulk').value.split(/\n/).forEach(line=>{const p=line.split(/\s*[|\t]\s*/);if(p[0]&&p[0].trim()){const w=mkWord([p[0],p[1],p[2],p[3],p[4]]);w.sample=false;S.words.push(w);n++;}});
     save();renderAunty();$('#bulkmsg').textContent=n?`Added ${n} words.`:'Nothing to add. Put one word per line.';};
   const tb=$('#tabbody');
+  bindRec();
+  tb.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>openRecorder(b.dataset.rec));
   tb.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.play);if(w&&!say(w))b.textContent='No sound';});
   tb.querySelectorAll('[data-up]').forEach(inp=>inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;putAudio(inp.dataset.up,f);renderAunty();const w=wordById(inp.dataset.up);if(w)say(w);});
   tb.querySelectorAll('[data-rmsnd]').forEach(b=>b.onclick=()=>{delAudio(b.dataset.rmsnd);renderAunty();});
@@ -741,10 +820,18 @@ function tabSettings(){
       ${sel('s-new','New words per round',st.newPer,[[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']])}
       ${sel('s-day','Rounds per day',st.perDay,[[1,'1'],[2,'2'],[3,'3'],[99,'No limit']])}
       ${sel('s-py','Show pinyin',st.pinyin,[['after','After she answers'],['always','Always'],['never','Never']])}
-      ${sel('s-rate','Computer voice speed',st.rate,[[0.65,'Slow'],[0.8,'Gentle'],[1,'Normal']])}
       ${sel('s-sfx','Happy sound on right answers',st.sfx,[[true,'On'],[false,'Off']])}
       ${sel('s-level','Challenge',st.level,[['gentle','Gentle'],['standard','Standard'],['stretch','Stretch']])}
     </div><p class="note" id="smsg" aria-live="polite"></p></div>
+    <div class="panel" id="voice-panel"><h3>Voice</h3>
+      <p class="note">Your recordings always play first. The computer voice is used for words without a recording, and for sentences. Which voices exist depends on the phone or tablet.</p>
+      <div class="set">
+        <label class="f" for="s-voice">Chinese voice<select id="s-voice"><option value="">Automatic (softest female voice found)</option>${zhVoices.map(v=>`<option value="${esc(v.name)}" ${st.voice===v.name?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select></label>
+        ${sel('s-rate','Speed',st.rate,[[0.45,'Very slow'],[0.6,'Slow'],[0.75,'Gentle'],[0.9,'Normal']])}
+        ${sel('s-pitch','Pitch',st.pitch,[[0.95,'Slightly lower'],[1,'Natural'],[1.1,'Slightly higher']])}
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn" id="v-test">Test the voice</button><span class="note" id="vmsg" aria-live="polite">${zhVoice?'Now using: '+esc(zhVoice.name):'No Chinese computer voice on this device. Use recordings.'}</span></div>
+    </div>
     <div class="panel" id="preview-panel"><h3>Preview a level</h3>
       <p class="note">Play a few questions exactly as she would see them at a stage, using the current Challenge setting. Nothing you answer here changes her garden or her summary.</p>
       <div class="row" style="margin-top:8px"><button class="btn" data-preview="all">One of each question type</button></div>
@@ -753,7 +840,7 @@ function tabSettings(){
     </div>
     <div class="panel"><h3>How words move</h3><p class="note">New words start as seeds. Each first-try right answer grows the plant one stage and waits longer before asking again: tomorrow, 2, 4, 7, 14, 21, then 30 days. A miss drops it back two stages and asks again tomorrow. There are 8 stages: seed and sprout ask her to listen and pick a picture; leafy and bud ask her to listen and pick the characters; flower and full bloom ask her to read the characters with no sound; fruit shows just the picture and she taps the characters from memory; big tree words are built character by character from a tray, or used to complete a sentence with a blank. The Challenge setting below changes how many options she sees, whether look-alike characters are mixed in as decoys, and whether the fruit and big tree stages appear at all.</p></div>
     <div class="panel"><h3>Backup</h3>
-      <p class="note">Copy the backup text and keep it in your notes. Recordings are not included; keep your voice memos on your phone.</p>
+      <p class="note">The backup includes recordings, so it can be long. To move the game to another phone: tap Copy backup, send the text to yourself (for example on WhatsApp or email), open the game on the other phone, paste it below and choose Restore.</p>
       <div class="row"><button class="btn" id="bk-copy">Copy backup</button><span class="note" id="bkmsg" aria-live="polite"></span></div>
       <textarea id="bk" style="margin-top:8px" placeholder="Backup text appears here. To restore, paste a backup here and choose Restore."></textarea>
       <div class="row" style="margin-top:8px">${confirmReset==='restore'?`<button class="btn warn" id="bk-restore-yes">Replace everything with this backup</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="bk-restore">Restore…</button>`}</div>
@@ -763,17 +850,26 @@ function tabSettings(){
       ${confirmReset==='sample'?`<button class="btn warn" id="rs-yes">Delete my words and load samples</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rs">Load sample words…</button>`}
     </div></div></div>`;
   const bind=(id,key,conv)=>{$(id).onchange=()=>{S.settings[key]=conv($(id).value);save();$('#smsg').textContent='Saved.';}};
-  bind('#s-len','len',Number);bind('#s-new','newPer',Number);bind('#s-day','perDay',Number);bind('#s-py','pinyin',String);bind('#s-rate','rate',Number);bind('#s-sfx','sfx',v=>v==='true');bind('#s-level','level',String);
+  bind('#s-len','len',Number);bind('#s-new','newPer',Number);bind('#s-day','perDay',Number);bind('#s-py','pinyin',String);bind('#s-rate','rate',Number);bind('#s-pitch','pitch',Number);bind('#s-sfx','sfx',v=>v==='true');bind('#s-level','level',String);
   $('#tabbody').querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>{const v=b.dataset.preview;
     if(!startPreview(v==='all'?'all':Number(v)))$('#pvmsg').textContent='Add at least 3 words in Words & sounds first.';});
+  $('#s-voice').onchange=()=>{S.settings.voice=$('#s-voice').value;save();pickVoice();$('#vmsg').textContent=zhVoice?'Now using: '+zhVoice.name:'No Chinese computer voice on this device.';};
+  $('#v-test').onclick=()=>{if(!speakText('小猫在花园里。'))$('#vmsg').textContent='No Chinese computer voice on this device. Use recordings.';};
   $('#s-aunty').oninput=()=>{S.settings.aunty=$('#s-aunty').value.trim()||'Aunty';save();};
-  $('#bk-copy').onclick=()=>{const txt=JSON.stringify(S);$('#bk').value=txt;
-    const done=()=>{$('#bkmsg').textContent='Copied.'};
-    try{navigator.clipboard.writeText(txt).then(done,()=>{$('#bk').select();$('#bkmsg').textContent='Select all and copy the text below.'})}catch(e){$('#bk').select();$('#bkmsg').textContent='Select all and copy the text below.'}};
+  let bkReady=null;
+  const copyNow=txt=>{const fail=()=>{$('#bk').select();$('#bkmsg').textContent='Backup ready. Tap Copy backup again, or select all the text below and copy it.'};
+    try{navigator.clipboard.writeText(txt).then(()=>{$('#bkmsg').textContent='Copied.'},fail)}catch(e){fail()}};
+  $('#bk-copy').onclick=async()=>{
+    if(bkReady&&$('#bk').value===bkReady){copyNow(bkReady);return;}
+    $('#bkmsg').textContent='Preparing backup…';bkReady=await backupText();$('#bk').value=bkReady;copyNow(bkReady);};
   const c=$('#cancel');if(c)c.onclick=()=>{confirmReset=null;renderAunty();};
   const r=$('#bk-restore');if(r)r.onclick=()=>{confirmReset='restore';const keep=$('#bk').value;renderAunty();$('#bk').value=keep;};
   const ry=$('#bk-restore-yes');if(ry)ry.onclick=()=>{try{const s=JSON.parse($('#bk').value);if(!s||s.v!==1||!Array.isArray(s.words))throw 0;
-      s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];S=s;save();confirmReset=null;renderAunty();$('#bkmsg').textContent='Restored.';}
+      const audio=s.audio||{};delete s.audio;
+      s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];
+      [...audioURL.keys()].forEach(delAudio);S=s;
+      Object.entries(audio).forEach(([id,u])=>{const b=dataURLToBlob(u);if(b)putAudio(id,b);});
+      save();pickVoice();confirmReset=null;renderAunty();$('#bkmsg').textContent=(n=>`Restored ${S.words.length} words and ${n} recording${n===1?'':'s'}.`)(Object.keys(audio).length);}
     catch(e){$('#bkmsg').textContent='That text is not a Zi Garden backup. Paste the whole backup and try again.';}};
   const rp=$('#rp');if(rp)rp.onclick=()=>{confirmReset='progress';renderAunty();};
   const rpy=$('#rp-yes');if(rpy)rpy.onclick=()=>{S.words.forEach(w=>Object.assign(w,{box:0,due:0,seen:0,right:0,wrong:0}));S.log=[];S.saved=[];save();confirmReset=null;renderAunty();};

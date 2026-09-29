@@ -13,5 +13,6 @@ The game is one static file, so any static host works. With GitHub Pages: Settin
 - Words, progress, the play log and settings: `localStorage` (key `zigarden.v1`) in the browser that plays the game.
 - Uploaded recordings: IndexedDB (database `zigarden`) in the same browser.
 - Nothing is sent to a server. Each device and browser keeps its own separate copy, and a new web address starts empty.
-- Use Grown-ups → Settings → Backup to copy the progress as text. Recordings are not in the backup.
+- Use Grown-ups → Settings → Backup to copy progress and recordings as text. Paste it into the game on another device and choose Restore to move everything there.
+- In-page recording (Grown-ups → Words & sounds → Record) needs the game on its own web address; inside a Claude artifact the microphone is blocked.
 - On iPad/iPhone Safari, add the page to the Home Screen: Safari can clear site data for sites not visited for 7 days, and Home Screen web apps are exempt.
