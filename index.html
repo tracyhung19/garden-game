@@ -108,6 +108,38 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 .recbtn.on{background:var(--ink);color:var(--bg);animation:pulse 1.2s infinite}
 @keyframes pulse{50%{opacity:.65}}
 #rec-filter{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg)}
+.qbtn{width:36px;height:36px;padding:0;font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--accent);border-color:var(--accent)}
+.how{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
+.howtop{display:flex;align-items:center;gap:12px;width:100%}
+.howtop .dots{justify-content:center;flex-wrap:nowrap}
+.dot.past{background:var(--accent);border-color:var(--accent)}
+.howart{background:var(--surface);border-radius:var(--r);padding:20px 12px;width:100%;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;box-shadow:0 2px 0 var(--line)}
+.howart .opts{width:100%;margin-top:0}
+.howart .opt{min-height:92px}
+.howart .opt .pic{font-size:44px}
+.mockplay{display:inline-block;pointer-events:none}
+.finger{font-size:46px;line-height:1}
+.speak.sm{width:84px;height:84px;box-shadow:none}
+.speak.sm svg{width:42px;height:42px}
+.arrows{display:flex;align-items:flex-end;gap:6px;justify-content:center}
+.arrows .ar{font-size:28px;color:var(--ink-2);padding-bottom:22px}
+.howtext{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.15;text-wrap:balance}
+.howsub{color:var(--ink-2);font-size:18px;min-height:1.5em}
+.hownav{display:flex;gap:12px;align-items:center;justify-content:center;width:100%;flex-wrap:wrap}
+.hownav .speak{width:60px;height:60px;box-shadow:none}
+.hownav .speak svg{width:30px;height:30px}
+.step{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
+.tick{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;background:var(--surface-2);color:var(--ink-2)}
+.tick.done{background:var(--accent);color:var(--on-accent)}
+.step h3{font-size:19px;margin-bottom:2px}
+.step .stat{font-size:14px;font-weight:700;color:var(--accent);margin-block:4px}
+.step .stat.todo{color:var(--miss)}
+.step p{margin:4px 0}
+.chk{display:flex;gap:8px;align-items:center;margin-top:8px}
+.chk input{width:20px;height:20px}
+details.more{margin-top:4px}
+details.more summary{cursor:pointer;font-weight:700}
+details.more ul{margin:8px 0 0;padding-left:20px}
 .next{background:var(--surface);border:2px solid var(--ink);border-radius:999px;padding:6px 28px;font-family:var(--f-display);font-weight:700;font-size:20px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
@@ -187,6 +219,7 @@ textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font
   <section id="v-garden"></section>
   <section id="v-play" hidden></section>
   <section id="v-done" hidden></section>
+  <section id="v-how" hidden></section>
   <section id="v-gate" hidden></section>
   <section id="v-aunty" class="aunty" hidden></section>
 </div>
@@ -222,7 +255,7 @@ function dayLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{w
 function dateLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{day:'numeric',month:'short',timeZone:'UTC'});}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function mkWord([hz,py,en,pic,sen]){return {id:uid(),hz:hz.trim(),py:(py||'').trim(),en:(en||'').trim(),pic:(pic||'').trim(),sen:(sen||'').trim(),active:true,box:0,due:0,seen:0,right:0,wrong:0,sample:true};}
-function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.6,pitch:1,voice:'',voiceV:2,sfx:true,flower:'rose',aunty:'Aunty',level:'standard'};}
+function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.6,pitch:1,voice:'',voiceV:2,sfx:true,flower:'rose',aunty:'Aunty',level:'standard',seenHow:false,setup:{},lastBackup:null};}
 function fresh(){return {v:1,words:SAMPLE.map(mkWord),log:[],saved:[],settings:defaults()};}
 
 let storageOK=true;
@@ -376,7 +409,7 @@ const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5
 
 /* ---------- views ---------- */
 let view='garden';
-function show(v){view=v;['garden','play','done','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
+function show(v){view=v;['garden','play','done','how','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
 function applyFlower(){$('#app').dataset.flower=S.settings.flower;}
 const sessionsToday=()=>{const d=today();return S.log.filter(l=>l.day===d).length};
 const active=()=>S.words.filter(w=>w.active);
@@ -407,6 +440,7 @@ function renderGarden(){
       <div class="brand"><span class="zi han">字</span><span class="word">Garden</span></div>
       <div class="row">
         <div class="swatches" role="group" aria-label="Flower colour">${FLOWERS.map(([k,l,c])=>`<button class="sw" style="background:${c}" data-flower="${k}" aria-label="${l}" aria-pressed="${S.settings.flower===k}"></button>`).join('')}</div>
+        <button class="ghost qbtn" id="to-how" aria-label="How to play" title="How to play">?</button>
         <button class="ghost" id="to-gate">Grown-ups</button>
       </div>
     </div>
@@ -422,7 +456,8 @@ function renderGarden(){
   $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;save();renderGarden();});
   $('#v-garden').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{const w=S.words.find(x=>x.id===b.dataset.say);if(w)say(w);});
   $('#to-gate').onclick=openGate;
-  const p=$('#play');if(p)p.onclick=startSession;
+  $('#to-how').onclick=()=>openHow(false);
+  const p=$('#play');if(p)p.onclick=()=>{if(!S.settings.seenHow)openHow(true);else startSession();};
 }
 
 /* ---------- session ---------- */
@@ -538,6 +573,7 @@ function startPreview(stage){
     items.forEach(i=>{i.t=qType(S.words.find(w=>w.id===i.id),stage);});
   }
   if(!items.length){sess=null;return false;}
+  S.settings.setup=Object.assign(S.settings.setup||{},{tried:true});save();
   sess={preview:true,items,queue:items.map(i=>i.id),i:0,total:items.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false,build:null};
   show('play');renderQ();return true;
 }
@@ -696,6 +732,41 @@ function renderDone(){
   $('#home').onclick=()=>{sess=null;renderGarden();show('garden');};
 }
 
+/* ---------- how to play (child) ---------- */
+let how=null;
+function sayEn(text){try{if(!window.speechSynthesis)return;hush();const ut=new SpeechSynthesisUtterance(text);ut.lang='en-GB';ut.rate=.85;speechSynthesis.speak(ut);}catch(e){}}
+function howSteps(){const nm=S.settings.aunty||'Aunty';return [
+  {text:'Tap Play.',sub:'A few questions each day.',
+   art:`<div class="big mockplay" aria-hidden="true">Play</div><div class="finger" aria-hidden="true">👆</div>`},
+  {text:'Listen. Tap the match.',sub:'Not sure? Have a go. Oops is OK!',
+   art:`<div class="speak sm" aria-hidden="true">${speakerIcon}</div><div class="opts" aria-hidden="true"><div class="opt right"><span class="pic">🐟</span></div><div class="opt"><span class="pic">🚗</span></div><div class="opt"><span class="pic">🌧️</span></div></div>`},
+  {text:'Right answers grow your plant.',sub:'Come back tomorrow to water it.',
+   art:`<div class="arrows" aria-hidden="true">${plant(0,54)}<span class="ar">→</span>${plant(2,58)}<span class="ar">→</span>${plant(5,66)}</div>`},
+  {text:`Pick a word to teach ${nm}.`,sub:`Show ${nm} next time!`,
+   art:`<div class="row" style="justify-content:center;flex-wrap:nowrap" aria-hidden="true"><div class="tchip han" style="font-size:64px;border-color:var(--petal);background:var(--surface)">猫</div><div class="finger">💬</div></div>`}
+];}
+function openHow(thenPlay){how={i:0,play:!!thenPlay};S.settings.seenHow=true;save();renderHow(true);show('how');}
+function renderHow(read){
+  const st=howSteps(),h=how,cur=st[h.i],last=h.i===st.length-1;
+  $('#v-how').innerHTML=`<div class="how">
+    <div class="howtop"><button class="ghost" id="how-close" aria-label="Close how to play">✕</button><div class="dots" aria-hidden="true">${st.map((_,i)=>`<span class="dot ${i<h.i?'past':''} ${i===h.i?'now':''}"></span>`).join('')}</div></div>
+    <div class="howart">${cur.art}</div>
+    <div class="howtext" aria-live="polite">${esc(cur.text)}</div>
+    <div class="howsub">${esc(cur.sub)}</div>
+    <div class="hownav">
+      <button class="ghost" id="how-back" ${h.i?'':'disabled'}>← Back</button>
+      ${window.speechSynthesis?`<button class="speak" id="how-say" aria-label="Read it to me">${speakerIcon}</button>`:''}
+      <button class="big" id="how-next">${last?(h.play?'Let’s play!':'Got it'):'Next →'}</button>
+    </div></div>`;
+  const end=()=>{hush();const go=h.play;how=null;if(go)startSession();else{renderGarden();show('garden');}};
+  $('#how-close').onclick=()=>{hush();how=null;renderGarden();show('garden');};
+  $('#how-back').onclick=()=>{if(h.i>0){h.i--;renderHow(true);}};
+  $('#how-next').onclick=()=>{if(last)end();else{h.i++;renderHow(true);}};
+  const sy=$('#how-say');if(sy)sy.onclick=()=>sayEn(cur.text+' '+cur.sub);
+  $('#how-next').focus();
+  if(read)sayEn(cur.text);
+}
+
 /* ---------- grown-ups gate ---------- */
 let gateAns=0;
 function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math.random()*29);gateAns=a+b;
@@ -704,22 +775,80 @@ function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math
     <p class="note" id="gmsg" aria-live="polite"></p></form>`;
   show('gate');$('#gin').focus();
   $('#gback').onclick=()=>show('garden');
-  $('#gform').onsubmit=e=>{e.preventDefault();if(parseInt($('#gin').value,10)===gateAns){tab='visit';renderAunty();show('aunty');}else{$('#gmsg').textContent='Not quite. Try again.';}};
+  $('#gform').onsubmit=e=>{e.preventDefault();if(parseInt($('#gin').value,10)===gateAns){tab=setupLeft()>0?'setup':'visit';renderAunty();show('aunty');}else{$('#gmsg').textContent='Not quite. Try again.';}};
 }
 
 /* ---------- grown-ups corner ---------- */
-let tab='visit';
+let tab='setup';
 function renderAunty(){
-  const name=esc(S.settings.aunty||'Aunty');
+  const name=esc(S.settings.aunty||'Aunty'),left=setupLeft();
   $('#v-aunty').innerHTML=`<div class="bar"><div class="brand"><span class="zi han">字</span><span class="word">Grown-ups</span></div><button class="ghost" id="aback">Back to garden</button></div>
     <div class="tabs" role="tablist">
-      ${[['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
+      ${[['setup',left?`Set up (${left} to do)`:'Set up'],['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
     </div><div id="tabbody"></div>`;
   $('#aback').onclick=()=>{cancelRec();renderGarden();show('garden')};
   $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderAunty();});
-  ({visit:tabVisit,words:tabWords,settings:tabSettings})[tab](name);
+  ({setup:tabSetup,visit:tabVisit,words:tabWords,settings:tabSettings})[tab](name);
 }
 function wordById(id){return S.words.find(w=>w.id===id)}
+function goTab(t,scrollSel){tab=t;renderAunty();if(scrollSel){const el=$(scrollSel);if(el)el.scrollIntoView({block:'start'});}}
+function homeStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
+function setupSteps(){
+  const su=S.settings.setup||{},custom=S.words.filter(w=>!w.sample).length,rec=S.words.filter(w=>audioURL.has(w.id)).length;
+  const ago=S.settings.lastBackup==null?null:today()-S.settings.lastBackup;
+  return [
+    {id:'home',req:false,done:homeStandalone()||!!su.home},
+    {id:'words',req:true,done:custom>0,custom},
+    {id:'voice',req:false,done:rec>0,rec},
+    {id:'try',req:true,done:!!su.tried||S.log.length>0},
+    {id:'backup',req:false,done:ago!=null&&ago<=7,ago}
+  ];
+}
+const setupLeft=()=>setupSteps().filter(x=>x.req&&!x.done).length;
+function tabSetup(name){
+  const steps=setupSteps(),by=Object.fromEntries(steps.map(x=>[x.id,x]));
+  const nSample=S.words.filter(w=>w.sample).length,doneN=steps.filter(x=>x.done).length;
+  const row=(n,x,title,stat,body,btns)=>`<div class="panel step"><div class="tick ${x.done?'done':''}" aria-hidden="true">${x.done?'✓':n}</div><div>
+    <h3>${title}${x.req?'':' <span class="muted" style="font-weight:400;font-size:14px">(optional)</span>'}</h3>
+    <div class="stat ${x.done||!x.req?'':'todo'}">${x.done?'Done: ':x.req?'To do: ':'Not yet: '}${stat}</div>${body}<div class="row" style="margin-top:8px">${btns}</div></div></div>`;
+  const home=by.home,standalone=homeStandalone();
+  const ago=by.backup.ago;
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div><h2>Set up in 5 steps</h2><p class="note">${doneN} of 5 done. Steps marked optional can wait.</p></div>
+    ${row(1,home,'Put the game on the Home Screen',standalone?'you are using the Home Screen icon now':(S.settings.setup&&S.settings.setup.home?'you said you added it':'not yet'),
+      `<p>Do this first. On iPhone and iPad the Home Screen icon and Safari can keep separate copies of her garden, so add words and recordings from the icon.</p>
+       <p><b>iPhone or iPad (Safari):</b> tap Share, then Add to Home Screen.<br><b>Android (Chrome):</b> tap ⋮, then Add to Home screen.</p>
+       ${standalone?'':`<label class="chk" for="su-home"><input type="checkbox" id="su-home" ${S.settings.setup&&S.settings.setup.home?'checked':''}> I have added it</label>`}`,'')}
+    ${row(2,by.words,'Add her real words',by.words.custom?`${by.words.custom} of your own words`:`only the ${nSample} sample words so far`,
+      `<p>Use words from her tuition and school lists. Add them one at a time, or paste a whole list. Pause or delete the samples you do not need.</p>`,
+      `<button class="btn" data-go="words">Open Words & sounds</button>`)}
+    ${row(3,by.voice,'Add your voice',by.voice.rec?`${by.voice.rec} words with your recording`:(zhVoice?'using the computer voice for now':'no sound on this device yet'),
+      `<p>A recording plays instead of the computer voice and sounds gentler. Say each word slowly, the way you would to her.${canRecord()?'':' This browser cannot record. Upload voice memos instead.'}</p>`,
+      `<button class="btn ${by.voice.done?'sec':''}" data-go="words">Record words</button>`)}
+    ${row(4,by.try,'Try a round yourself',by.try.done?'you have tried it':'not yet',
+      `<p>See what she will see, then use Preview a level to try the harder questions. Nothing you do there changes her garden.</p>`,
+      `<button class="btn" id="su-how">See how to play</button><button class="btn sec" data-go="settings" data-scroll="#preview-panel">Preview a level</button>`)}
+    ${row(5,by.backup,'Back up once a week',ago==null?'no backup yet':ago===0?'last backup today':`last backup ${ago} day${ago===1?'':'s'} ago`,
+      `<p>Copy the backup text and keep it in your notes. It includes your recordings. It is also how you move her garden to another phone.</p>`,
+      `<button class="btn ${by.backup.done?'sec':''}" data-go="settings" data-scroll="#backup-panel">Open Backup</button>`)}
+    <div class="panel"><h3>Your two visits a week</h3><ul class="ideas">
+      <li><b>First visit:</b> she plays one round next to you. Let the game do the correcting. She picks a word to teach you.</li>
+      <li><b>Second visit:</b> ask her to teach you that word, and play the confused student. Use the Before the visit tab for ideas.</li>
+      <li><b>In between:</b> up to ${S.settings.perDay>=99?'any number of':S.settings.perDay} short rounds a day, about 5 minutes.</li></ul></div>
+    <div class="panel"><h3>What to expect</h3><p class="note">A word grows one stage each time she gets it right first time on a day it is due. At best that is Flower after 1 week, Full bloom after 2, Fruit after 4 and Big tree after 7. A miss sends it back sooner. If she skips a week, nothing is lost.</p>
+      <details class="more"><summary>How the game picks questions</summary>
+        <ul><li><b>Seed, Sprout:</b> she hears the word and taps the picture.</li>
+        <li><b>Leafy, Bud:</b> she hears the word and taps the characters.</li>
+        <li><b>Flower, Full bloom:</b> she sees the characters and taps the picture.</li>
+        <li><b>Fruit:</b> she sees the picture and taps the characters.</li>
+        <li><b>Big tree:</b> she builds the word from tiles, or fills the gap in a sentence.</li></ul>
+        <p class="note">After a right answer the word waits 1, 2, 4, 7, 14, 21, then 30 days. A miss drops it two stages and brings it back tomorrow. The Challenge setting changes how many choices she sees and whether look-alike characters appear. Gentle stops at Full bloom.</p></details></div>
+  </div>`;
+  const tb=$('#tabbody');
+  const sh=$('#su-home');if(sh)sh.onchange=()=>{S.settings.setup=Object.assign(S.settings.setup||{},{home:sh.checked});save();renderAunty();};
+  tb.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>goTab(b.dataset.go,b.dataset.scroll));
+  $('#su-how').onclick=()=>openHow(false);
+}
 function tabVisit(name){
   const d=today();
   const days=[...Array(7)].map((_,i)=>d-6+i).map(n=>{const ls=S.log.filter(l=>l.day===n);const rs=ls.flatMap(l=>l.results);const ok=rs.filter(r=>r.ok).length;
@@ -838,8 +967,7 @@ function tabSettings(){
       <div class="row" style="margin-top:8px">${STAGES.map((n,i)=>`<button class="btn small sec" data-preview="${i}">${esc(n)}</button>`).join('')}</div>
       <p class="note" id="pvmsg" aria-live="polite">${zhVoice||S.words.some(w=>audioURL.has(w.id))?'':'This device has no Chinese voice, so listening questions show as reading questions unless a word has your recording.'}</p>
     </div>
-    <div class="panel"><h3>How words move</h3><p class="note">New words start as seeds. Each first-try right answer grows the plant one stage and waits longer before asking again: tomorrow, 2, 4, 7, 14, 21, then 30 days. A miss drops it back two stages and asks again tomorrow. There are 8 stages: seed and sprout ask her to listen and pick a picture; leafy and bud ask her to listen and pick the characters; flower and full bloom ask her to read the characters with no sound; fruit shows just the picture and she taps the characters from memory; big tree words are built character by character from a tray, or used to complete a sentence with a blank. The Challenge setting below changes how many options she sees, whether look-alike characters are mixed in as decoys, and whether the fruit and big tree stages appear at all.</p></div>
-    <div class="panel"><h3>Backup</h3>
+    <div class="panel" id="backup-panel"><h3>Backup</h3>
       <p class="note">The backup includes recordings, so it can be long. To move the game to another phone: tap Copy backup, send the text to yourself (for example on WhatsApp or email), open the game on the other phone, paste it below and choose Restore.</p>
       <div class="row"><button class="btn" id="bk-copy">Copy backup</button><span class="note" id="bkmsg" aria-live="polite"></span></div>
       <textarea id="bk" style="margin-top:8px" placeholder="Backup text appears here. To restore, paste a backup here and choose Restore."></textarea>
@@ -861,7 +989,7 @@ function tabSettings(){
     try{navigator.clipboard.writeText(txt).then(()=>{$('#bkmsg').textContent='Copied.'},fail)}catch(e){fail()}};
   $('#bk-copy').onclick=async()=>{
     if(bkReady&&$('#bk').value===bkReady){copyNow(bkReady);return;}
-    $('#bkmsg').textContent='Preparing backup…';bkReady=await backupText();$('#bk').value=bkReady;copyNow(bkReady);};
+    $('#bkmsg').textContent='Preparing backup…';bkReady=await backupText();$('#bk').value=bkReady;S.settings.lastBackup=today();save();copyNow(bkReady);};
   const c=$('#cancel');if(c)c.onclick=()=>{confirmReset=null;renderAunty();};
   const r=$('#bk-restore');if(r)r.onclick=()=>{confirmReset='restore';const keep=$('#bk').value;renderAunty();$('#bk').value=keep;};
   const ry=$('#bk-restore-yes');if(ry)ry.onclick=()=>{try{const s=JSON.parse($('#bk').value);if(!s||s.v!==1||!Array.isArray(s.words))throw 0;
