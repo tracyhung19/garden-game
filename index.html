@@ -140,6 +140,7 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 details.more{margin-top:4px}
 details.more summary{cursor:pointer;font-weight:700}
 details.more ul{margin:8px 0 0;padding-left:20px}
+.flagbtn{padding:4px 10px;font-size:15px}
 .next{background:var(--surface);border:2px solid var(--ink);border-radius:999px;padding:6px 28px;font-family:var(--f-display);font-weight:700;font-size:20px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
@@ -255,7 +256,7 @@ function dayLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{w
 function dateLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{day:'numeric',month:'short',timeZone:'UTC'});}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function mkWord([hz,py,en,pic,sen]){return {id:uid(),hz:hz.trim(),py:(py||'').trim(),en:(en||'').trim(),pic:(pic||'').trim(),sen:(sen||'').trim(),active:true,box:0,due:0,seen:0,right:0,wrong:0,sample:true};}
-function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.6,pitch:1,voice:'',voiceV:2,sfx:true,flower:'rose',aunty:'Aunty',level:'standard',seenHow:false,setup:{},lastBackup:null};}
+function defaults(){return {len:8,newPer:3,perDay:2,pinyin:'after',rate:0.6,pitch:1,voice:'',voiceV:2,sfx:true,flower:'rose',aunty:'Aunty',level:'standard',seenHow:false,setup:{},lastBackup:null,trial:true};}
 function fresh(){return {v:1,words:SAMPLE.map(mkWord),log:[],saved:[],settings:defaults()};}
 
 let storageOK=true;
@@ -269,6 +270,24 @@ function load(){
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
 let S=load();
+
+/* ---------- trial log: stays on this device, copied by hand ---------- */
+const BUILD='2026-10-08.1';
+const LOGKEY='zigarden.log.v1',SID=Math.random().toString(36).slice(2,6);
+let LOG=[],logT=null;
+try{LOG=JSON.parse(localStorage.getItem(LOGKEY)||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
+function logFlush(){try{localStorage.setItem(LOGKEY,JSON.stringify(LOG))}catch(e){}}
+function tlog(e,d){
+  if(S.settings.trial===false)return;
+  let v;try{v=view}catch(x){}
+  LOG.push(Object.assign({},d||{},{_t:Date.now(),_s:SID,_e:e,_v:v}));
+  if(LOG.length>2000)LOG=LOG.slice(-2000);
+  clearTimeout(logT);logT=setTimeout(logFlush,500);
+}
+window.addEventListener('pagehide',logFlush);
+document.addEventListener('visibilitychange',()=>{tlog(document.hidden?'hidden':'visible');if(document.hidden)logFlush();});
+window.addEventListener('error',ev=>tlog('error',{msg:String(ev.message||'').slice(0,120),line:ev.lineno}));
+window.addEventListener('unhandledrejection',ev=>tlog('error',{msg:String(ev.reason&&ev.reason.message||ev.reason||'').slice(0,120)}));
 
 /* ---------- audio: recordings (IndexedDB) + Chinese computer voice ---------- */
 const audioURL=new Map(); let db=null, idbOK=false;
@@ -305,8 +324,8 @@ function saySentence(w){if(!speakText(w.sen.replace(/＿/g,w.hz)))say(w);}
 function say(w){
   hush();
   const u=audioURL.get(w.id);
-  if(u){curAudio=new Audio(u);curAudio.play().catch(()=>{});return true;}
-  return speakText(w.hz);
+  if(u){curAudio=new Audio(u);curAudio.play().catch(er=>tlog('audio_err',{hz:w.hz,msg:String(er&&er.name||er).slice(0,40)}));return true;}
+  const okv=speakText(w.hz);if(!okv)tlog('nosound',{hz:w.hz});return okv;
 }
 
 /* ---------- in-page recording (needs the game on its own web address) ---------- */
@@ -326,7 +345,7 @@ async function startRec(){
   const w=wordById(rec.ids[rec.i]);if(!w)return;
   hush();
   try{recStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}
-  catch(e){rec.status='error';rec.msg='The microphone is blocked here. Open the game from its own web address (for example GitHub Pages) and allow the microphone when asked. You can still use Add sound to upload voice memos.';renderAunty();return;}
+  catch(e){tlog('rec_err',{msg:String(e&&e.name||e)});rec.status='error';rec.msg='The microphone is blocked here. Open the game from its own web address (for example GitHub Pages) and allow the microphone when asked. You can still use Add sound to upload voice memos.';renderAunty();return;}
   const chunks=[],mt=recMime();
   try{mediaRec=mt?new MediaRecorder(recStream,{mimeType:mt}):new MediaRecorder(recStream);}catch(e){mediaRec=new MediaRecorder(recStream);}
   const type=mediaRec.mimeType||mt||'audio/webm';
@@ -334,7 +353,7 @@ async function startRec(){
   mediaRec.onstop=()=>{clearTimeout(recTimer);stopTracks();mediaRec=null;
     const blob=new Blob(chunks,{type});
     if(blob.size<800){rec.status='error';rec.msg='That was too short. Tap Record, then say the word.';renderAunty();return;}
-    putAudio(w.id,blob);rec.status='saved';rec.msg='';renderAunty();say(w);};
+    putAudio(w.id,blob);tlog('rec_saved',{hz:w.hz,bytes:blob.size});rec.status='saved';rec.msg='';renderAunty();say(w);};
   mediaRec.start();rec.status='recording';rec.msg='';renderAunty();
   recTimer=setTimeout(stopRec,6000);
 }
@@ -409,7 +428,7 @@ const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5
 
 /* ---------- views ---------- */
 let view='garden';
-function show(v){view=v;['garden','play','done','how','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
+function show(v){tlog('nav',{to:v});view=v;['garden','play','done','how','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
 function applyFlower(){$('#app').dataset.flower=S.settings.flower;}
 const sessionsToday=()=>{const d=today();return S.log.filter(l=>l.day===d).length};
 const active=()=>S.words.filter(w=>w.active);
@@ -453,11 +472,11 @@ function renderGarden(){
       <div class="garden">${act.map(w=>`<button class="pot" data-say="${w.id}" aria-label="${esc(w.hz)}, ${STAGES[w.box]}">${plant(w.box,58)}<span class="hz han">${esc(w.hz)}</span></button>`).join('')||'<p class="muted">No words yet.</p>'}</div>
       <div class="legend">${STAGES.map((s,i)=>`<span>${plant(i,22)}${s}</span>`).join('')}</div>
     </div>`;
-  $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;save();renderGarden();});
-  $('#v-garden').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{const w=S.words.find(x=>x.id===b.dataset.say);if(w)say(w);});
+  $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;tlog('flower',{k:b.dataset.flower});save();renderGarden();});
+  $('#v-garden').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{const w=S.words.find(x=>x.id===b.dataset.say);if(w){tlog('plant_tap',{hz:w.hz,box:w.box});say(w);}});
   $('#to-gate').onclick=openGate;
-  $('#to-how').onclick=()=>openHow(false);
-  const p=$('#play');if(p)p.onclick=()=>{if(!S.settings.seenHow)openHow(true);else startSession();};
+  $('#to-how').onclick=()=>{tlog('help_tap');openHow(false);};
+  const p=$('#play');if(p)p.onclick=()=>{tlog('play_tap',{first:!S.settings.seenHow});if(!S.settings.seenHow)openHow(true);else startSession();};
 }
 
 /* ---------- session ---------- */
@@ -573,13 +592,14 @@ function startPreview(stage){
     items.forEach(i=>{i.t=qType(S.words.find(w=>w.id===i.id),stage);});
   }
   if(!items.length){sess=null;return false;}
-  S.settings.setup=Object.assign(S.settings.setup||{},{tried:true});save();
+  S.settings.setup=Object.assign(S.settings.setup||{},{tried:true});save();tlog('preview_start',{stage});
   sess={preview:true,items,queue:items.map(i=>i.id),i:0,total:items.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false,build:null};
   show('play');renderQ();return true;
 }
 function startSession(){
   const q=buildQueue(); if(!q.length)return;
-  sess={queue:q,i:0,total:q.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false,build:null};
+  sess={queue:q,i:0,total:q.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false,build:null,t0:Date.now()};
+  tlog('round_start',{n:q.length,words:q.map(id=>{const w=wordById(id);return w?w.hz:'?'}).join(',')});
   show('play');renderQ();
 }
 const cur=()=>S.words.find(w=>w.id===sess.queue[sess.i]);
@@ -589,14 +609,16 @@ function dotsHTML(){
   return sess.queue.slice(0,sess.total).map((id,i)=>{const r=sess.first.get(id);return `<span class="dot ${r===true?'ok':r===false?'miss':''} ${i===Math.min(sess.i,sess.total-1)&&sess.i<sess.total?'now':''}"></span>`}).join('');
 }
 function topBar(){const it=curItem();
-  return `<div class="playtop"><button class="ghost" id="stop" aria-label="${sess.preview?'Stop preview':'Stop and go back to the garden'}">✕ Stop</button><div class="dots" aria-hidden="true">${dotsHTML()}</div></div>${it?`<p class="previewtag">Preview · ${STAGES[it.box]} · ${TYPE_LABEL[it.t]} · her progress is not changed</p>`:''}`;}
+  return `<div class="playtop"><button class="ghost" id="stop" aria-label="${sess.preview?'Stop preview':'Stop and go back to the garden'}">✕ Stop</button><div class="dots" aria-hidden="true">${dotsHTML()}</div>${S.settings.trial!==false?`<button class="ghost flagbtn" id="flag" aria-label="Mark this question for the grown-up" title="Mark this question">⚑</button>`:''}</div>${it?`<p class="previewtag">Preview · ${STAGES[it.box]} · ${TYPE_LABEL[it.t]} · her progress is not changed</p>`:''}`;}
 function renderQ(){
   const w=cur(); if(!w){finish();return;}
   const it=curItem();
   const t=it?it.t:qType(w); sess.t=t; sess.locked=false;
-  if(t==='build'){renderBuild(w);return;}
+  if(t==='build'){sess.build=null;renderBuild(w);return;}
   const box=curBox(w);
   const opts=shuffle([w,...distractors(w,t,box)]);
+  sess.qT=Date.now();sess.opts=opts.map(o=>({id:o.id,hz:o.hz,syn:!!o.synthetic}));
+  tlog('q_show',{hz:w.hz,t,box,n:opts.length,hear:canHear(w),rec:audioURL.has(w.id),pre:!!sess.preview});
   const pyAlways=S.settings.pinyin==='always'&&levelOf()!=='stretch';
   let prompt='';
   if(t==='listen'||t==='hearchar')prompt=`<button class="speak" id="speak" aria-label="Hear the word again">${speakerIcon}</button><div class="py muted">Listen, then tap</div>`;
@@ -619,6 +641,7 @@ function renderQ(){
     setTimeout(()=>say(w),250);
     let usedReplay=false;
     sp.onclick=()=>{
+      tlog('replay',{hz:w.hz});
       if(levelOf()==='stretch'&&t==='hearchar'){
         if(usedReplay)return;
         usedReplay=true;say(w);sp.disabled=true;
@@ -634,6 +657,7 @@ function renderBuild(w){
     const decoys=pickDecoyChars(target,S.words.filter(x=>x.id!==w.id),need,useConfusable(curBox(w)));
     const tiles=shuffle([...target.map((ch,i)=>({id:'t'+i+'-'+uid(),ch,real:true,used:false})),...decoys.map((ch,i)=>({id:'d'+i+'-'+uid(),ch,real:false,used:false}))]);
     sess.build={wid:w.id,target,filled:[],tiles,missed:false};
+    sess.qT=Date.now();tlog('q_show',{hz:w.hz,t:'build',box:curBox(w),n:tiles.length,hear:canHear(w),rec:audioURL.has(w.id),pre:!!sess.preview});
     setTimeout(()=>say(w),250);
   }
   const b=sess.build;
@@ -646,7 +670,7 @@ function renderBuild(w){
     <div class="tray">${tray}</div>
     <div class="feedback" id="fb" aria-live="polite"></div>`;
   $('#stop').onclick=()=>{finish(true)};
-  const sp=$('#speak'); if(sp)sp.onclick=()=>say(w);
+  const sp=$('#speak'); if(sp)sp.onclick=()=>{tlog('replay',{hz:w.hz});say(w);};
   $('#v-play').querySelectorAll('[data-tile]').forEach(btn=>btn.onclick=()=>buildTap(btn,w));
 }
 function buildTap(btn,w){
@@ -659,6 +683,7 @@ function buildTap(btn,w){
     if(b.filled.length===b.target.length){
       sess.locked=true;
       const firstTime=!sess.first.has(w.id),ok=!b.missed;
+      tlog('q_ans',{hz:w.hz,t:'build',ok,first:firstTime,ms:Date.now()-(sess.qT||Date.now()),pre:!!sess.preview});
       if(firstTime){sess.first.set(w.id,ok);if(!sess.preview){sess.results.push({id:w.id,ok,t:'build'});applyResult(w,ok);}}
       chime();say(w);
       const showPy=S.settings.pinyin!=='never';
@@ -669,6 +694,7 @@ function buildTap(btn,w){
   }else{
     btn.classList.add('wrong');
     setTimeout(()=>btn.classList.remove('wrong'),300);
+    tlog('b_wrong',{hz:w.hz,need,tapped:tile.ch,real:tile.real});
     if(!b.missed){
       b.missed=true;
       if(!sess.preview&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
@@ -685,6 +711,8 @@ function applyResult(w,ok){
 function answer(btn,w){
   if(sess.locked)return; sess.locked=true;
   const ok=btn.dataset.id===w.id, firstTime=!sess.first.has(w.id);
+  const pk=(sess.opts||[]).find(o=>o.id===btn.dataset.id);
+  tlog('q_ans',{hz:w.hz,t:sess.t,ok,first:firstTime,ms:Date.now()-(sess.qT||Date.now()),pick:ok?undefined:(pk?pk.hz:'?'),syn:pk&&pk.syn?1:undefined,pre:!!sess.preview});
   if(firstTime){sess.first.set(w.id,ok);if(!sess.preview){sess.results.push({id:w.id,ok,t:sess.t});applyResult(w,ok);}}
   $('#v-play').querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.dataset.id===w.id)b.classList.add('right');});
   const showPy=S.settings.pinyin!=='never';
@@ -704,7 +732,8 @@ function answer(btn,w){
 function advance(){if(view!=='play')return;sess.i++;if(sess.i>=sess.queue.length)finish();else renderQ();}
 function finish(stopped){
   try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}
-  if(sess&&sess.preview){sess=null;tab='settings';renderAunty();show('aunty');const el=$('#preview-panel');if(el)el.scrollIntoView();return;}
+  if(sess&&sess.preview){tlog('preview_end',{at:sess.i,stopped:!!stopped});sess=null;tab='settings';renderAunty();show('aunty');const el=$('#preview-panel');if(el)el.scrollIntoView();return;}
+  if(sess&&!sess.preview)tlog(stopped?'round_quit':'round_end',{ans:sess.results.length,ok:sess.results.filter(r=>r.ok).length,planned:sess.total,at:sess.i,ms:sess.t0?Date.now()-sess.t0:undefined});
   if(sess&&sess.results.length){S.log.push({day:today(),ts:Date.now(),results:sess.results});if(S.log.length>400)S.log=S.log.slice(-400);save();}
   if(stopped||!sess||!sess.results.length){sess=null;renderGarden();show('garden');return;}
   renderDone();show('done');
@@ -726,6 +755,7 @@ function renderDone(){
     S.saved=S.saved.filter(s=>!(s.day===d&&s.fromSess===sess.ts0));
     S.saved.push({id,day:d,fromSess:sess.ts0});save();
     const w=S.words.find(x=>x.id===id); if(w)say(w);
+    tlog('teach',{hz:w&&w.hz});
     $('#tmsg').textContent=`Saved! Teach ${S.settings.aunty||'Aunty'} this word next time.`;
   });
   sess.ts0=sess.ts0||Date.now();
@@ -745,9 +775,10 @@ function howSteps(){const nm=S.settings.aunty||'Aunty';return [
   {text:`Pick a word to teach ${nm}.`,sub:`Show ${nm} next time!`,
    art:`<div class="row" style="justify-content:center;flex-wrap:nowrap" aria-hidden="true"><div class="tchip han" style="font-size:64px;border-color:var(--petal);background:var(--surface)">猫</div><div class="finger">💬</div></div>`}
 ];}
-function openHow(thenPlay){how={i:0,play:!!thenPlay};S.settings.seenHow=true;save();renderHow(true);show('how');}
+function openHow(thenPlay){tlog('how_open',{play:!!thenPlay});how={i:0,play:!!thenPlay};S.settings.seenHow=true;save();renderHow(true);show('how');}
 function renderHow(read){
   const st=howSteps(),h=how,cur=st[h.i],last=h.i===st.length-1;
+  tlog('how_step',{i:h.i});
   $('#v-how').innerHTML=`<div class="how">
     <div class="howtop"><button class="ghost" id="how-close" aria-label="Close how to play">✕</button><div class="dots" aria-hidden="true">${st.map((_,i)=>`<span class="dot ${i<h.i?'past':''} ${i===h.i?'now':''}"></span>`).join('')}</div></div>
     <div class="howart">${cur.art}</div>
@@ -758,8 +789,8 @@ function renderHow(read){
       ${window.speechSynthesis?`<button class="speak" id="how-say" aria-label="Read it to me">${speakerIcon}</button>`:''}
       <button class="big" id="how-next">${last?(h.play?'Let’s play!':'Got it'):'Next →'}</button>
     </div></div>`;
-  const end=()=>{hush();const go=h.play;how=null;if(go)startSession();else{renderGarden();show('garden');}};
-  $('#how-close').onclick=()=>{hush();how=null;renderGarden();show('garden');};
+  const end=()=>{hush();const go=h.play;tlog('how_end',{play:go});how=null;if(go)startSession();else{renderGarden();show('garden');}};
+  $('#how-close').onclick=()=>{hush();tlog('how_close',{i:h.i});how=null;renderGarden();show('garden');};
   $('#how-back').onclick=()=>{if(h.i>0){h.i--;renderHow(true);}};
   $('#how-next').onclick=()=>{if(last)end();else{h.i++;renderHow(true);}};
   const sy=$('#how-say');if(sy)sy.onclick=()=>sayEn(cur.text+' '+cur.sub);
@@ -775,7 +806,7 @@ function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math
     <p class="note" id="gmsg" aria-live="polite"></p></form>`;
   show('gate');$('#gin').focus();
   $('#gback').onclick=()=>show('garden');
-  $('#gform').onsubmit=e=>{e.preventDefault();if(parseInt($('#gin').value,10)===gateAns){tab=setupLeft()>0?'setup':'visit';renderAunty();show('aunty');}else{$('#gmsg').textContent='Not quite. Try again.';}};
+  $('#gform').onsubmit=e=>{e.preventDefault();const gok=parseInt($('#gin').value,10)===gateAns;tlog('gate',{ok:gok});if(gok){tab=setupLeft()>0?'setup':'visit';renderAunty();show('aunty');}else{$('#gmsg').textContent='Not quite. Try again.';}};
 }
 
 /* ---------- grown-ups corner ---------- */
@@ -784,14 +815,14 @@ function renderAunty(){
   const name=esc(S.settings.aunty||'Aunty'),left=setupLeft();
   $('#v-aunty').innerHTML=`<div class="bar"><div class="brand"><span class="zi han">字</span><span class="word">Grown-ups</span></div><button class="ghost" id="aback">Back to garden</button></div>
     <div class="tabs" role="tablist">
-      ${[['setup',left?`Set up (${left} to do)`:'Set up'],['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
+      ${[['setup',left?`Set up (${left} to do)`:'Set up'],['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup'],['trial','Trial log']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
     </div><div id="tabbody"></div>`;
   $('#aback').onclick=()=>{cancelRec();renderGarden();show('garden')};
-  $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;renderAunty();});
-  ({setup:tabSetup,visit:tabVisit,words:tabWords,settings:tabSettings})[tab](name);
+  $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;tlog('tab',{t:tab});renderAunty();});
+  ({setup:tabSetup,visit:tabVisit,words:tabWords,settings:tabSettings,trial:tabTrial})[tab](name);
 }
 function wordById(id){return S.words.find(w=>w.id===id)}
-function goTab(t,scrollSel){tab=t;renderAunty();if(scrollSel){const el=$(scrollSel);if(el)el.scrollIntoView({block:'start'});}}
+function goTab(t,scrollSel){tab=t;tlog('tab',{t});renderAunty();if(scrollSel){const el=$(scrollSel);if(el)el.scrollIntoView({block:'start'});}}
 function homeStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
 function setupSteps(){
   const su=S.settings.setup||{},custom=S.words.filter(w=>!w.sample).length,rec=S.words.filter(w=>audioURL.has(w.id)).length;
@@ -815,6 +846,7 @@ function tabSetup(name){
   const ago=by.backup.ago;
   $('#tabbody').innerHTML=`<div class="stack">
     <div><h2>Set up in 5 steps</h2><p class="note">${doneN} of 5 done. Steps marked optional can wait.</p></div>
+    ${S.settings.trial!==false?`<div class="panel"><h3>Testing it with her?</h3><p class="note">The game keeps a private log on this device. In a round, tap ⚑ to mark a question. Afterwards open the Trial log tab, add a note and copy the log for Claude.</p><div class="row" style="margin-top:8px"><button class="btn sec" data-go="trial">Open Trial log</button></div></div>`:''}
     ${row(1,home,'Put the game on the Home Screen',standalone?'you are using the Home Screen icon now':(S.settings.setup&&S.settings.setup.home?'you said you added it':'not yet'),
       `<p>Do this first. On iPhone and iPad the Home Screen icon and Safari can keep separate copies of her garden, so add words and recordings from the icon.</p>
        <p><b>iPhone or iPad (Safari):</b> tap Share, then Add to Home Screen.<br><b>Android (Chrome):</b> tap ⋮, then Add to Home screen.</p>
@@ -977,11 +1009,11 @@ function tabSettings(){
       ${confirmReset==='progress'?`<button class="btn warn" id="rp-yes">Reset all plants to seeds</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rp">Reset progress…</button>`}
       ${confirmReset==='sample'?`<button class="btn warn" id="rs-yes">Delete my words and load samples</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rs">Load sample words…</button>`}
     </div></div></div>`;
-  const bind=(id,key,conv)=>{$(id).onchange=()=>{S.settings[key]=conv($(id).value);save();$('#smsg').textContent='Saved.';}};
+  const bind=(id,key,conv)=>{$(id).onchange=()=>{S.settings[key]=conv($(id).value);tlog('setting',{k:key,val:S.settings[key]});save();$('#smsg').textContent='Saved.';}};
   bind('#s-len','len',Number);bind('#s-new','newPer',Number);bind('#s-day','perDay',Number);bind('#s-py','pinyin',String);bind('#s-rate','rate',Number);bind('#s-pitch','pitch',Number);bind('#s-sfx','sfx',v=>v==='true');bind('#s-level','level',String);
   $('#tabbody').querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>{const v=b.dataset.preview;
     if(!startPreview(v==='all'?'all':Number(v)))$('#pvmsg').textContent='Add at least 3 words in Words & sounds first.';});
-  $('#s-voice').onchange=()=>{S.settings.voice=$('#s-voice').value;save();pickVoice();$('#vmsg').textContent=zhVoice?'Now using: '+zhVoice.name:'No Chinese computer voice on this device.';};
+  $('#s-voice').onchange=()=>{S.settings.voice=$('#s-voice').value;tlog('setting',{k:'voice',val:S.settings.voice});save();pickVoice();$('#vmsg').textContent=zhVoice?'Now using: '+zhVoice.name:'No Chinese computer voice on this device.';};
   $('#v-test').onclick=()=>{if(!speakText('小猫在花园里。'))$('#vmsg').textContent='No Chinese computer voice on this device. Use recordings.';};
   $('#s-aunty').oninput=()=>{S.settings.aunty=$('#s-aunty').value.trim()||'Aunty';save();};
   let bkReady=null;
@@ -1005,11 +1037,94 @@ function tabSettings(){
   const rsy=$('#rs-yes');if(rsy)rsy.onclick=()=>{S.words.forEach(w=>delAudio(w.id));const st2=S.settings;S=fresh();S.settings=st2;save();confirmReset=null;renderAunty();};
 }
 
+/* ---------- trial log tab and report ---------- */
+let confirmLog=false;
+const pad2=n=>String(n).padStart(2,'0');
+const stamp=t=>{const d=new Date(t);return `${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;};
+const fv=v=>v===true?'1':v===false?'0':String(v).replace(/\s+/g,'_').slice(0,40);
+function evLine(x){const kv=Object.keys(x).filter(k=>!['_t','_s','_e','_v'].includes(k)&&x[k]!==undefined&&x[k]!==null).map(k=>`${k}=${fv(x[k])}`).join(' ');
+  return `${stamp(x._t)} ${x._s} ${x._e}${x._v?'@'+x._v:''} ${kv}`.trim();}
+const medOf=a=>{if(!a.length)return '-';const b=a.slice().sort((p,q)=>p-q),m=b.length>>1;return Math.round(b.length%2?b[m]:(b[m-1]+b[m])/2);};
+const countBy=(arr,f)=>{const m=new Map();arr.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m.entries()].sort((a,b)=>b[1]-a[1]);};
+function trialReport(){
+  const L=LOG,ev=n=>L.filter(x=>x._e===n),o=ev('open').slice(-1)[0]||{};
+  const R=[],kvs=obj=>Object.entries(obj).filter(([k])=>!['_t','_s','_e','_v'].includes(k)).map(([k,v])=>`${k}=${fv(v)}`).join(' ');
+  R.push('=== ZI-GARDEN TRIAL LOG v1 ===');
+  R.push(`build        ${BUILD}`);
+  R.push(`exported     ${stamp(Date.now())}`);
+  R.push(`span         ${L.length?stamp(L[0]._t)+' to '+stamp(L[L.length-1]._t):'(empty)'} | ${L.length} events | ${new Set(L.map(x=>x._s)).size} visits`);
+  R.push('--- device (latest open) ---');
+  R.push(kvs(o)||'(none)');
+  const ans=L.filter(x=>x._e==='q_ans'&&!x.pre),first=ans.filter(x=>x.first);
+  R.push('--- rounds ---');
+  R.push(`started ${ev('round_start').length} | finished ${ev('round_end').length} | stopped early ${ev('round_quit').length}`);
+  const quits=ev('round_quit').map(x=>`${x.at}/${x.planned}`);if(quits.length)R.push(`stopped at question: ${quits.join(', ')}`);
+  R.push('--- questions, first try, rounds only (preview excluded) ---');
+  R.push(`answered ${first.length} | right ${first.filter(x=>x.ok).length} (${first.length?Math.round(100*first.filter(x=>x.ok).length/first.length):0}%)`);
+  R.push('type            n  right%  median_ms  slow(>8s)');
+  const types=[...new Set(first.map(x=>x.t))];
+  types.forEach(t=>{const a=first.filter(x=>x.t===t);R.push(`${(TYPE_LABEL[t]||t).padEnd(22)} ${String(a.length).padStart(2)}  ${String(Math.round(100*a.filter(x=>x.ok).length/a.length)).padStart(4)}%  ${String(medOf(a.map(x=>x.ms))).padStart(8)}  ${a.filter(x=>x.ms>8000).length}`);});
+  const wp=countBy(ans.filter(x=>!x.ok&&x.pick),x=>`${x.hz}->${x.pick}${x.syn?'(look-alike)':''}`).slice(0,10);
+  R.push('--- wrong picks (target->tapped) ---');R.push(wp.length?wp.map(([k,n])=>`${k} x${n}`).join(' | '):'none');
+  const bw=ev('b_wrong');if(bw.length)R.push(`build wrong tiles: ${bw.length} (${countBy(bw,x=>x.real?'real-but-out-of-order':'decoy').map(([k,n])=>k+' x'+n).join(', ')})`);
+  R.push('--- friction ---');
+  const dt=countBy(ev('dead_tap'),x=>x.on+'@'+x._v).slice(0,6);
+  R.push(`no_sound ${ev('nosound').length} | audio_err ${ev('audio_err').length} | replays ${ev('replay').length} | left the app ${ev('hidden').length} | errors ${ev('error').length} | flags ${ev('flag').length}`);
+  R.push(`taps on nothing: ${ev('dead_tap').length}${dt.length?' ('+dt.map(([k,n])=>k+' x'+n).join(', ')+')':''}`);
+  const hs=ev('how_step'),he=ev('how_end'),hc=ev('how_close');
+  R.push(`how-to-play: opened ${ev('how_open').length} | finished ${he.length} | closed early ${hc.length}${hc.length?' at step '+hc.map(x=>x.i).join(','):''}`);
+  R.push(`teach-Aunty picks ${ev('teach').length} | plant taps ${ev('plant_tap').length} | flower colour changes ${ev('flower').length}`);
+  const notes=ev('note');R.push('--- notes from the grown-up ---');
+  R.push(notes.length?notes.map(x=>`${stamp(x._t)} [last question ${x.last||'?'}] ${x.text}`).join('\n'):'none');
+  const fl=ev('flag');R.push('--- flagged questions (may include accidental taps) ---');
+  R.push(fl.length?fl.map(x=>`${stamp(x._t)} ${x.hz} ${TYPE_LABEL[x.t]||x.t} stage=${x.box} after ${x.ms}ms${x.pre?' (preview)':''}`).join('\n'):'none');
+  const er=ev('error').slice(-8);if(er.length){R.push('--- errors (last 8) ---');er.forEach(x=>R.push(`${stamp(x._t)} ${x.msg} line=${x.line||'?'}`));}
+  const st=Object.entries(L.filter(x=>x._e==='setting').reduce((a,x)=>(a[x.k]=x.val,a),{}));if(st.length)R.push('settings changed: '+st.map(([k,v])=>k+'='+fv(v)).join(' | '));
+  R.push('--- latest events (up to 250) ---');
+  L.slice(-250).forEach(x=>R.push(evLine(x)));
+  R.push('=== END ===');
+  return R.join('\n');
+}
+function tabTrial(){
+  const on=S.settings.trial!==false,n=LOG.length;
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div class="panel"><h3>Trial log</h3>
+      <p class="note">While you test the game it keeps a private log on this device: which questions were shown, what she tapped, how long answers took, and any errors. It holds no recordings and no names. It leaves this device only if you copy it and paste it to Claude.</p>
+      <label class="chk" for="tr-on"><input type="checkbox" id="tr-on" ${on?'checked':''}> Keep the trial log</label>
+      <p class="note">${n} events from ${new Set(LOG.map(x=>x._s)).size} visit${new Set(LOG.map(x=>x._s)).size===1?'':'s'} · build ${BUILD}</p></div>
+    <div class="panel"><h3>Add a note</h3>
+      <p class="note">Write what you saw, for example "she tapped the picture instead of the answers". It is saved with the time and the screen she was on.</p>
+      <textarea id="tr-note" placeholder="What did you notice?" style="min-height:80px;font-family:inherit;font-size:16px"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="tr-addnote">Save note</button><span class="note" id="tr-msg" aria-live="polite"></span></div></div>
+    <div class="panel"><h3>Send the log to Claude</h3>
+      <p class="note">Tap Copy, then paste it into the chat. It starts with a summary, then your notes and flagged questions, then the latest events.</p>
+      <div class="row"><button class="btn" id="tr-copy">Copy trial log</button>
+        ${confirmLog?`<button class="btn warn" id="tr-clear-yes">Delete the whole log</button><button class="btn sec" id="tr-cancel">Keep it</button>`:`<button class="btn sec" id="tr-clear">Clear…</button>`}</div>
+      <p class="note" id="tr-cmsg" aria-live="polite"></p>
+      <textarea id="tr-text" readonly placeholder="The copied log shows here." style="margin-top:4px;min-height:140px;font-size:12px"></textarea></div></div>`;
+  const tb=$('#tabbody');
+  $('#tr-on').onchange=()=>{if(!$('#tr-on').checked)tlog('trial_off');S.settings.trial=$('#tr-on').checked;save();logFlush();renderAunty();};
+  $('#tr-addnote').onclick=()=>{const t=$('#tr-note').value.trim();if(!t){$('#tr-msg').textContent='Write something first.';return;}
+    const lq=[...LOG].reverse().find(x=>x._e==='q_show');tlog('note',{text:t.slice(0,400),last:lq?lq.hz+'/'+lq.t:'-'});logFlush();$('#tr-note').value='';$('#tr-msg').textContent='Saved.';};
+  $('#tr-copy').onclick=()=>{const txt=trialReport();$('#tr-text').value=txt;
+    const fail=()=>{$('#tr-text').select();$('#tr-cmsg').textContent='Select all the text below and copy it.'};
+    try{navigator.clipboard.writeText(txt).then(()=>{$('#tr-cmsg').textContent='Copied. Paste it into the chat.'},fail)}catch(e){fail()}};
+  const c=$('#tr-clear');if(c)c.onclick=()=>{confirmLog=true;renderAunty();};
+  const cn=$('#tr-cancel');if(cn)cn.onclick=()=>{confirmLog=false;renderAunty();};
+  const cy=$('#tr-clear-yes');if(cy)cy.onclick=()=>{LOG=[];logFlush();confirmLog=false;renderAunty();};
+}
+
 /* ---------- boot ---------- */
 async function start(){
   applyFlower();renderGarden();show('garden');
   await openDB();await loadAudio();
   if(view==='garden')renderGarden();
+  tlog('open',{build:BUILD,ua:navigator.userAgent.slice(0,150),scr:`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,win:`${innerWidth}x${innerHeight}`,standalone:homeStandalone(),store:storageOK,idb:idbOK,speech:!!window.speechSynthesis,zh:zhVoice?zhVoice.name+' '+zhVoice.lang:'none',zhN:zhVoices.length,mic:canRecord(),words:S.words.length,active:active().length,rec:S.words.filter(w=>audioURL.has(w.id)).length,level:levelOf(),perDay:S.settings.perDay,len:S.settings.len,seenHow:S.settings.seenHow});
+  $('#v-play').addEventListener('click',ev=>{const f=ev.target.closest('#flag');if(!f||!sess)return;const w=cur();
+    tlog('flag',{hz:w?w.hz:'?',t:sess.t,box:w?curBox(w):'?',pre:!!sess.preview,ms:Date.now()-(sess.qT||Date.now())});f.textContent='✓';f.disabled=true;});
+  document.addEventListener('pointerdown',ev=>{if(view!=='play'&&view!=='how'&&view!=='garden')return;const el=ev.target;
+    if(!el||!el.closest||el.closest('button,a,input,select,textarea,label'))return;
+    tlog('dead_tap',{on:(typeof el.className==='string'&&el.className.split(' ')[0])||el.tagName||'?'});},true);
 }
 try{ if(window.claude&&window.claude.hot&&window.claude.hot.ready){window.claude.hot.ready(start)}else{start()} }catch(e){start()}
 })();

@@ -8,6 +8,10 @@ Single self-contained page: open `index.html` in a browser, or host it as a stat
 
 The game is one static file, so any static host works. With GitHub Pages: Settings → Pages → Deploy from a branch → `main` / root. It is then served at `https://tracyhung19.github.io/garden-game/`.
 
+## Trial log
+
+While `Keep the trial log` is on (Grown-ups → Trial log), the game keeps a private event log in the browser (`zigarden.log.v1`): questions shown, taps, answer times, wrong picks, replays, silent audio failures, errors, notes and ⚑ flags. It holds no recordings and no names. To share it, open Grown-ups → Trial log → Copy trial log and paste the text to Claude. The log is separate from the backup and is not touched by Reset progress.
+
 ## Where data lives
 
 - Words, progress, the play log and settings: `localStorage` (key `zigarden.v1`) in the browser that plays the game.
