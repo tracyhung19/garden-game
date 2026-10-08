@@ -1,9 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDF3EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1D1A" media="(prefers-color-scheme: dark)">
+<meta name="description" content="A Chinese word garden for a new Primary 1 learner.">
+<!--pwa-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zi Garden">
+<!--/pwa-->
 <title>Zi Garden</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Serif+SC:wght@600&display=swap">
 <style>
 :root{
+  color-scheme:light;
   --bg:#EDF3EA; --surface:#FFFFFF; --surface-2:#E1EBDD; --ink:#1C3A33; --ink-2:#4A655D; --line:#C8D7C4;
   --leaf:#3E9B5F; --stem:#4B8C4D; --soil:#8C6B4B; --soil-2:#6A4F37; --sun:#F2B632;
   --petal:#E5677A; --ok:#2E8C58; --ok-soft:#D7F0DF; --miss:#B85A3E; --miss-soft:#F7E1D8;
@@ -35,9 +53,21 @@
 [data-flower="orange"]{--petal:#EF8A3C}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
-#app{max-width:780px;margin:0 auto;padding-inline:16px;padding-block:14px 40px}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:rgba(30,107,88,.18)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+#app{max-width:780px;margin:0 auto;outline:none;
+  padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+p{text-wrap:pretty}
+.skip{position:absolute;left:12px;top:-60px;background:var(--accent);color:var(--on-accent);padding:8px 14px;border-radius:10px;z-index:10;font-weight:700}
+.skip:focus{top:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html.noptr,html.noptr body{overscroll-behavior-y:contain}
+.opt,.tile,.pot,.speak,.big,.sw,.tchip,.next,.dot{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.panel,.soilbed{scroll-margin-top:12px}
+.upl:focus-within{outline:3px solid var(--focus);outline-offset:2px}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
@@ -50,7 +80,7 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 .bar{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
 .brand{display:flex;align-items:baseline;gap:8px}
 .brand .zi{font-size:40px;line-height:1;color:var(--accent)}
-.brand .word{font-family:var(--f-display);font-weight:800;font-size:28px}
+.brand .word{margin:0;font-family:var(--f-display);font-weight:800;font-size:28px}
 .swatches{display:flex;gap:8px;align-items:center}
 .sw{width:30px;height:30px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
@@ -67,7 +97,7 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 /* garden */
 .soilbed{margin-top:18px;background:linear-gradient(var(--surface-2),var(--surface-2));border-radius:var(--r);padding:16px}
 .soilbed h3{font-size:18px;margin-bottom:10px;color:var(--ink-2);font-weight:700}
-.garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px}
+.garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:10px}
 .pot{background:var(--surface);border:0;border-radius:14px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:0}
 .pot .hz{font-size:26px;line-height:1.1}
 .pot:hover{outline:2px solid var(--line)}
@@ -126,7 +156,7 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 .howtext{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.15;text-wrap:balance}
 .howsub{color:var(--ink-2);font-size:18px;min-height:1.5em}
 .hownav{display:flex;gap:12px;align-items:center;justify-content:center;width:100%;flex-wrap:wrap}
-.hownav .speak{width:60px;height:60px;box-shadow:none}
+.hownav .speak{width:60px;height:60px;box-shadow:none;color:var(--ink-2);background:var(--surface);border:2px solid var(--line)}
 .hownav .speak svg{width:30px;height:30px}
 .step{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
 .tick{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;background:var(--surface-2);color:var(--ink-2)}
@@ -140,7 +170,30 @@ h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balanc
 details.more{margin-top:4px}
 details.more summary{cursor:pointer;font-weight:700}
 details.more ul{margin:8px 0 0;padding-left:20px}
-.flagbtn{padding:4px 10px;font-size:15px}
+.flagbtn{padding:4px 10px;font-size:15px;min-width:44px}
+/* phone: keep the thumb area for answers, anchor the main action to the bottom */
+#v-play:not([hidden]),#v-how:not([hidden]){display:flex;flex-direction:column;min-height:calc(100vh - 54px);min-height:calc(100dvh - 54px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+#v-play .prompt{flex:1 1 auto}
+#v-how .how{flex:1 1 auto}
+.howart{flex:1 1 auto}
+@media (pointer:coarse){
+  .ghost,.btn,.tab,.next,.qbtn{min-height:44px}
+  .btn.small{min-height:40px;padding-inline:14px}
+  .sw{width:44px;height:44px}
+  .qbtn{width:44px;height:44px}
+  .f input,.f select,select{min-height:44px}
+}
+@media (hover:hover){
+  .opt:hover:not(:disabled),.pot:hover,.tchip:hover,.tile:hover:not(:disabled){border-color:var(--accent);outline:none}
+  .btn:hover,.big:hover:not(:disabled),.next:hover,.speak:hover{filter:brightness(1.07)}
+  .tab:hover{color:var(--ink)}
+}
+.opt:active:not(:disabled),.tile:active:not(:disabled),.pot:active,.btn:active{transform:scale(.97)}
+@media (max-width:520px){
+  .hero{flex-direction:column;align-items:stretch;text-align:left}
+  .hero .big{width:100%}
+}
+.chip,.wrow .meta{overflow-wrap:anywhere}
 .next{background:var(--surface);border:2px solid var(--ink);border-radius:999px;padding:6px 28px;font-family:var(--f-display);font-weight:700;font-size:20px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
@@ -157,7 +210,8 @@ details.more ul{margin:8px 0 0;padding-left:20px}
 
 /* done */
 .done{text-align:center;display:flex;flex-direction:column;gap:18px;align-items:center}
-.done h2{font-size:34px}
+.done h1{font-size:34px}
+.gate h1{font-size:24px}
 .grew{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .grew .pot{animation:pop .5s both}
 .teach{background:var(--surface);border-radius:var(--r);padding:16px;width:100%}
@@ -176,7 +230,7 @@ details.more ul{margin:8px 0 0;padding-left:20px}
 .btn.small{padding:4px 10px;font-size:14px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .tab{background:none;border:0;border-bottom:3px solid transparent;padding:6px 10px;font-weight:700;color:var(--ink-2)}
-.tab[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.tab[aria-current="page"]{color:var(--ink);border-color:var(--accent)}
 .stack{display:flex;flex-direction:column;gap:16px}
 .aunty h2{font-size:24px}
 .aunty h3{font-size:18px;margin-bottom:8px}
@@ -209,21 +263,23 @@ details.more ul{margin:8px 0 0;padding-left:20px}
 @media (max-width:520px){.wrow{grid-template-columns:52px 1fr}.wrow .acts{grid-column:1/-1;justify-content:flex-start}}
 .form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end}
 @media (max-width:620px){.form{grid-template-columns:1fr 1fr}}
-label.f{display:flex;flex-direction:column;font-size:13px;color:var(--ink-2);gap:2px}
+label.f{display:flex;flex-direction:column;font-size:14px;color:var(--ink-2);gap:2px}
 .f input,.f select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg);width:100%}
-textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px}
 .set{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-
-<div id="app" data-flower="rose">
+</head>
+<body>
+<a class="skip" href="#app">Skip to the game</a>
+<main id="app" data-flower="rose" tabindex="-1">
   <section id="v-garden"></section>
   <section id="v-play" hidden></section>
   <section id="v-done" hidden></section>
   <section id="v-how" hidden></section>
   <section id="v-gate" hidden></section>
   <section id="v-aunty" class="aunty" hidden></section>
-</div>
+</main>
 
 <script>
 (function(){
@@ -272,7 +328,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}c
 let S=load();
 
 /* ---------- trial log: stays on this device, copied by hand ---------- */
-const BUILD='2026-10-08.1';
+const BUILD='2026-10-08.2';
 const LOGKEY='zigarden.log.v1',SID=Math.random().toString(36).slice(2,6);
 let LOG=[],logT=null;
 try{LOG=JSON.parse(localStorage.getItem(LOGKEY)||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
@@ -369,7 +425,7 @@ function recPanel(){
   const main=busy?`<button class="recbtn on" id="rec-stop">■ Stop</button>`:`<button class="recbtn" id="rec-start">● ${has?'Record again':'Record'}</button>`;
   const say=busy?'Recording. Say the word, then tap Stop. It stops by itself after 6 seconds.':rec.status==='saved'?'Saved. Listen, then go to the next word or record again.':'';
   return `<div class="panel" id="rec-panel"><h3>Record words · ${rec.i+1} of ${rec.ids.length}</h3>
-    <div class="recword"><span class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small class="muted">${esc(w.en)} ${esc(w.pic)}</small></span></div>
+    <div class="recword"><span lang="zh-Hans" class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small class="muted">${esc(w.en)} ${esc(w.pic)}</small></span></div>
     <div class="row" style="justify-content:center">${main}<button class="btn sec" id="rec-play" ${has&&!busy?'':'disabled'}>▶ Play</button></div>
     <p class="note" aria-live="polite" style="text-align:center">${say}</p>${rec.msg?`<p class="warnnote">${esc(rec.msg)}</p>`:''}
     <div class="row" style="justify-content:space-between"><button class="btn sec" id="rec-prev" ${rec.i>0&&!busy?'':'disabled'}>← Back</button><button class="btn sec" id="rec-close">Done</button><button class="btn" id="rec-next" ${busy?'disabled':''}>Next word →</button></div></div>`;
@@ -424,11 +480,15 @@ function plant(box,size){size=size||60;const b=Math.max(0,Math.min(7,box|0));
     if(b===6)s+=fruit(21,top+7)+fruit(43,top+9);
   }
   return s+'</svg>';}
-const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#fff"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
 
 /* ---------- views ---------- */
 let view='garden';
-function show(v){tlog('nav',{to:v});view=v;['garden','play','done','how','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
+let navDepth=0;
+function show(v){tlog('nav',{to:v});view=v;
+  document.documentElement.classList.toggle('noptr',v==='play'||v==='how');
+  if(v!=='garden'&&!navDepth){try{history.pushState({zi:1},'');navDepth=1;}catch(e){}}
+  if(v==='garden'&&navDepth){navDepth=0;try{history.back();}catch(e){}}['garden','play','done','how','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
 function applyFlower(){$('#app').dataset.flower=S.settings.flower;}
 const sessionsToday=()=>{const d=today();return S.log.filter(l=>l.day===d).length};
 const active=()=>S.words.filter(w=>w.active);
@@ -456,7 +516,7 @@ function renderGarden(){
   const msg=act.length<3?'Ask a grown-up to add some words.':resting?'Your garden is resting. Come back tomorrow!':n>0?`${n} plants need water today.`:'Everything is watered. Play for extra sunshine!';
   $('#v-garden').innerHTML=`
     <div class="bar">
-      <div class="brand"><span class="zi han">字</span><span class="word">Garden</span></div>
+      <div class="brand"><span lang="zh-Hans" class="zi han">字</span><h1 class="word">Garden</h1></div>
       <div class="row">
         <div class="swatches" role="group" aria-label="Flower colour">${FLOWERS.map(([k,l,c])=>`<button class="sw" style="background:${c}" data-flower="${k}" aria-label="${l}" aria-pressed="${S.settings.flower===k}"></button>`).join('')}</div>
         <button class="ghost qbtn" id="to-how" aria-label="How to play" title="How to play">?</button>
@@ -469,7 +529,7 @@ function renderGarden(){
     </div>
     <div class="soilbed">
       <h3>My garden · ${act.filter(w=>w.box>=4).length} of ${act.length} in flower</h3>
-      <div class="garden">${act.map(w=>`<button class="pot" data-say="${w.id}" aria-label="${esc(w.hz)}, ${STAGES[w.box]}">${plant(w.box,58)}<span class="hz han">${esc(w.hz)}</span></button>`).join('')||'<p class="muted">No words yet.</p>'}</div>
+      <div class="garden">${act.map(w=>`<button class="pot" data-say="${w.id}" aria-label="${esc(w.hz)}, ${STAGES[w.box]}">${plant(w.box,58)}<span lang="zh-Hans" class="hz han">${esc(w.hz)}</span></button>`).join('')||'<p class="muted">No words yet.</p>'}</div>
       <div class="legend">${STAGES.map((s,i)=>`<span>${plant(i,22)}${s}</span>`).join('')}</div>
     </div>`;
   $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;tlog('flower',{k:b.dataset.flower});save();renderGarden();});
@@ -622,12 +682,12 @@ function renderQ(){
   const pyAlways=S.settings.pinyin==='always'&&levelOf()!=='stretch';
   let prompt='';
   if(t==='listen'||t==='hearchar')prompt=`<button class="speak" id="speak" aria-label="Hear the word again">${speakerIcon}</button><div class="py muted">Listen, then tap</div>`;
-  else if(t==='recall')prompt=`<div class="bigzi">${esc(w.pic)}</div><div class="py">${esc(w.en)}</div>`;
-  else if(t==='sentence')prompt=`<div class="sentbox han">${esc(w.sen)}</div>${w.pic?`<div class="bigzi" style="font-size:48px">${esc(w.pic)}</div>`:''}`;
-  else prompt=`<div class="bigzi han">${esc(w.hz)}</div><div class="py">${pyAlways?esc(w.py):''}</div>`;
+  else if(t==='recall')prompt=`<div class="bigzi" role="img" aria-label="${esc(w.en)}">${esc(w.pic)}</div><div class="py">${esc(w.en)}</div>`;
+  else if(t==='sentence')prompt=`<div lang="zh-Hans" class="sentbox han">${esc(w.sen)}</div>${w.pic?`<div class="bigzi" style="font-size:48px">${esc(w.pic)}</div>`:''}`;
+  else prompt=`<div lang="zh-Hans" class="bigzi han">${esc(w.hz)}</div><div class="py">${pyAlways?esc(w.py):''}</div>`;
   const optHTML=o=>{
-    if(t==='listen')return `<span class="pic">${esc(o.pic)}</span><span class="hz han small">${esc(o.hz)}</span>`;
-    if(t==='hearchar'||t==='recall'||t==='sentence')return `<span class="hz han">${esc(o.hz)}</span>${pyAlways&&o.py?`<span class="py">${esc(o.py)}</span>`:''}`;
+    if(t==='listen')return `<span class="pic">${esc(o.pic)}</span><span lang="zh-Hans" class="hz han small">${esc(o.hz)}</span>`;
+    if(t==='hearchar'||t==='recall'||t==='sentence')return `<span lang="zh-Hans" class="hz han">${esc(o.hz)}</span>${pyAlways&&o.py?`<span class="py">${esc(o.py)}</span>`:''}`;
     if(t==='read')return `<span class="pic">${esc(o.pic)}</span>`;
     return `<span class="en">${esc(o.en)}</span>`;
   };
@@ -663,7 +723,7 @@ function renderBuild(w){
   const b=sess.build;
   const prompt=`<button class="speak" id="speak" aria-label="Hear the word again">${speakerIcon}</button>${w.pic?`<div class="bigzi" style="font-size:56px">${esc(w.pic)}</div>`:''}`;
   const slots=b.target.map((ch,i)=>`<div class="slot han ${i<b.filled.length?'filled':''}">${i<b.filled.length?esc(b.filled[i]):''}</div>`).join('');
-  const tray=b.tiles.map(t=>`<button class="tile han" data-tile="${t.id}" ${t.used?'disabled':''}>${esc(t.ch)}</button>`).join('');
+  const tray=b.tiles.map(t=>`<button lang="zh-Hans" class="tile han" data-tile="${t.id}" ${t.used?'disabled':''}>${esc(t.ch)}</button>`).join('');
   $('#v-play').innerHTML=`${topBar()}
     <div class="prompt">${prompt}</div>
     <div class="slots">${slots}</div>
@@ -688,7 +748,7 @@ function buildTap(btn,w){
       chime();say(w);
       const showPy=S.settings.pinyin!=='never';
       renderBuild(w);
-      $('#fb').innerHTML=`<div class="say"><span class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
+      $('#fb').innerHTML=`<div class="say"><span lang="zh-Hans" class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
       setTimeout(advance,1500);
     }else renderBuild(w);
   }else{
@@ -720,12 +780,12 @@ function answer(btn,w){
   if(ok){chime();
     if(sess.t==='read'||sess.t==='readen')say(w);
     else if(sess.t==='sentence')saySentence(w);
-    fb.innerHTML=`<div class="say"><span class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
+    fb.innerHTML=`<div class="say"><span lang="zh-Hans" class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
     setTimeout(advance,(sess.t==='read'||sess.t==='readen'||sess.t==='sentence')?1500:1100);
   }else{
     btn.classList.add('wrong');say(w);
     if(!sess.preview&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
-    fb.innerHTML=`<div class="say">This one is <span class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div><button class="next" id="next">Next</button>`;
+    fb.innerHTML=`<div class="say">This one is <span lang="zh-Hans" class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div><button class="next" id="next">Next</button>`;
     $('#next').onclick=advance; $('#next').focus();
   }
 }
@@ -743,10 +803,10 @@ function renderDone(){
   const words=[...new Set(sess.results.map(r=>r.id))].map(id=>S.words.find(w=>w.id===id)).filter(Boolean);
   const name=esc(S.settings.aunty||'Aunty');
   $('#v-done').innerHTML=`<div class="done">
-    <h2>${grown.length?'Your garden grew!':'All watered!'}</h2>
-    ${grown.length?`<div class="grew">${grown.map((w,i)=>`<div class="pot" style="animation-delay:${i*90}ms">${plant(w.box,64)}<span class="hz han">${esc(w.hz)}</span></div>`).join('')}</div>`:'<p class="muted">Tricky words come back soon so they can grow.</p>'}
+    <h1>${grown.length?'Your garden grew!':'All watered!'}</h1>
+    ${grown.length?`<div class="grew">${grown.map((w,i)=>`<div class="pot" style="animation-delay:${i*90}ms">${plant(w.box,64)}<span lang="zh-Hans" class="hz han">${esc(w.hz)}</span></div>`).join('')}</div>`:'<p class="muted">Tricky words come back soon so they can grow.</p>'}
     <div class="teach"><h3>Which word will you teach ${name}?</h3>
-      <div class="teachgrid">${words.map(w=>`<button class="tchip han" data-t="${w.id}" aria-pressed="false">${esc(w.hz)}</button>`).join('')}</div>
+      <div class="teachgrid">${words.map(w=>`<button lang="zh-Hans" class="tchip han" data-t="${w.id}" aria-pressed="false">${esc(w.hz)}</button>`).join('')}</div>
       <p class="muted" id="tmsg" aria-live="polite">Pick one. Show ${name} next time!</p></div>
     <button class="big" id="home">Back to my garden</button></div>`;
   $('#v-done').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
@@ -773,7 +833,7 @@ function howSteps(){const nm=S.settings.aunty||'Aunty';return [
   {text:'Right answers grow your plant.',sub:'Come back tomorrow to water it.',
    art:`<div class="arrows" aria-hidden="true">${plant(0,54)}<span class="ar">→</span>${plant(2,58)}<span class="ar">→</span>${plant(5,66)}</div>`},
   {text:`Pick a word to teach ${nm}.`,sub:`Show ${nm} next time!`,
-   art:`<div class="row" style="justify-content:center;flex-wrap:nowrap" aria-hidden="true"><div class="tchip han" style="font-size:64px;border-color:var(--petal);background:var(--surface)">猫</div><div class="finger">💬</div></div>`}
+   art:`<div class="row" style="justify-content:center;flex-wrap:nowrap" aria-hidden="true"><div lang="zh-Hans" class="tchip han" style="font-size:64px;border-color:var(--petal);background:var(--surface)">猫</div><div class="finger">💬</div></div>`}
 ];}
 function openHow(thenPlay){tlog('how_open',{play:!!thenPlay});how={i:0,play:!!thenPlay};S.settings.seenHow=true;save();renderHow(true);show('how');}
 function renderHow(read){
@@ -782,7 +842,7 @@ function renderHow(read){
   $('#v-how').innerHTML=`<div class="how">
     <div class="howtop"><button class="ghost" id="how-close" aria-label="Close how to play">✕</button><div class="dots" aria-hidden="true">${st.map((_,i)=>`<span class="dot ${i<h.i?'past':''} ${i===h.i?'now':''}"></span>`).join('')}</div></div>
     <div class="howart">${cur.art}</div>
-    <div class="howtext" aria-live="polite">${esc(cur.text)}</div>
+    <h1 class="howtext" aria-live="polite">${esc(cur.text)}</h1>
     <div class="howsub">${esc(cur.sub)}</div>
     <div class="hownav">
       <button class="ghost" id="how-back" ${h.i?'':'disabled'}>← Back</button>
@@ -801,8 +861,8 @@ function renderHow(read){
 /* ---------- grown-ups gate ---------- */
 let gateAns=0;
 function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math.random()*29);gateAns=a+b;
-  $('#v-gate').innerHTML=`<form class="panel gate" id="gform"><h2>Grown-ups only</h2><label class="f" for="gin">What is ${a} + ${b}?</label>
-    <div class="row"><input id="gin" inputmode="numeric" autocomplete="off"><button class="btn" type="submit">Open</button><button class="btn sec" type="button" id="gback">Back</button></div>
+  $('#v-gate').innerHTML=`<form class="panel gate" id="gform"><h1>Grown-ups only</h1><label class="f" for="gin">What is ${a} + ${b}?</label>
+    <div class="row"><input id="gin" name="answer" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="go"><button class="btn" type="submit">Open</button><button class="btn sec" type="button" id="gback">Back</button></div>
     <p class="note" id="gmsg" aria-live="polite"></p></form>`;
   show('gate');$('#gin').focus();
   $('#gback').onclick=()=>show('garden');
@@ -813,12 +873,13 @@ function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math
 let tab='setup';
 function renderAunty(){
   const name=esc(S.settings.aunty||'Aunty'),left=setupLeft();
-  $('#v-aunty').innerHTML=`<div class="bar"><div class="brand"><span class="zi han">字</span><span class="word">Grown-ups</span></div><button class="ghost" id="aback">Back to garden</button></div>
-    <div class="tabs" role="tablist">
-      ${[['setup',left?`Set up (${left} to do)`:'Set up'],['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup'],['trial','Trial log']].map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}</button>`).join('')}
-    </div><div id="tabbody"></div>`;
+  $('#v-aunty').innerHTML=`<div class="bar"><div class="brand"><span lang="zh-Hans" class="zi han">字</span><h1 class="word">Grown-ups</h1></div><button class="ghost" id="aback">Back to garden</button></div>
+    <nav class="tabs" aria-label="Grown-ups sections">
+      ${[['setup',left?`Set up (${left} to do)`:'Set up'],['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup'],['trial','Trial log']].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':''} >${l}</button>`).join('')}
+    </nav><h2 class="sr" id="tabtitle"></h2><div id="tabbody"></div>`;
   $('#aback').onclick=()=>{cancelRec();renderGarden();show('garden')};
   $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;tlog('tab',{t:tab});renderAunty();});
+  const tt=$('#tabtitle');if(tt)tt.textContent=({setup:'Set up',visit:'Before the visit',words:'Words and sounds',settings:'Settings and backup',trial:'Trial log'})[tab]||'';
   ({setup:tabSetup,visit:tabVisit,words:tabWords,settings:tabSettings,trial:tabTrial})[tab](name);
 }
 function wordById(id){return S.words.find(w=>w.id===id)}
@@ -890,10 +951,10 @@ function tabVisit(name){
   const saved=S.saved.slice(-10).reverse().map(s=>[s,wordById(s.id)]).filter(x=>x[1]);
   const act=active(); const counts=STAGES.map((_,i)=>act.filter(w=>w.box===i).length);
   const ideas=[];
-  if(saved.length)ideas.push(`Ask her to teach you <span class="han">${esc(saved[0][1].hz)}</span>. Play the confused student.`);
-  if(tricky.length)ideas.push(`Use ${tricky.slice(0,3).map(([w])=>`<span class="han">${esc(w.hz)}</span>`).join(', ')} in real conversation: pointing, cooking, reading signs.`);
+  if(saved.length)ideas.push(`Ask her to teach you <span lang="zh-Hans" class="han">${esc(saved[0][1].hz)}</span>. Play the confused student.`);
+  if(tricky.length)ideas.push(`Use ${tricky.slice(0,3).map(([w])=>`<span lang="zh-Hans" class="han">${esc(w.hz)}</span>`).join(', ')} in real conversation: pointing, cooking, reading signs.`);
   const newOnes=act.filter(w=>w.seen===0).slice(0,3);
-  if(newOnes.length)ideas.push(`Coming up next in the game: ${newOnes.map(w=>`<span class="han">${esc(w.hz)}</span>`).join(', ')}. Say them out loud before she meets them.`);
+  if(newOnes.length)ideas.push(`Coming up next in the game: ${newOnes.map(w=>`<span lang="zh-Hans" class="han">${esc(w.hz)}</span>`).join(', ')}. Say them out loud before she meets them.`);
   if(!ideas.length)ideas.push('No play yet this week. Play one round together at the next visit.');
   const recCount=S.words.filter(w=>audioURL.has(w.id)).length;
   const typeStats=new Map();
@@ -908,8 +969,8 @@ function tabVisit(name){
     <div class="panel"><h3>Ideas for your next visit</h3><ul class="ideas">${ideas.map(i=>`<li>${i}</li>`).join('')}</ul></div>
     <div class="panel"><h3>Last 7 days</h3><div class="days">${days}</div><p class="note">Rounds played each day, and how many answers were right first time.</p>
       ${hardest.length?`<p class="note">Hardest question types (last 14 days): ${hardest.map(([t,p])=>`${esc(TYPE_LABEL[t]||t)} ${p}%`).join(' · ')}</p>`:''}</div>
-    <div class="panel"><h3>Tricky words (last 2 weeks)</h3>${tricky.length?`<div class="chips">${tricky.map(([w,c])=>`<div class="chip"><span class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small>${esc(w.en)}</small></span><span class="miss-pill">missed ${c}</span><button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button></div>`).join('')}</div>`:'<p class="muted">No misses yet.</p>'}</div>
-    <div class="panel"><h3>Words she saved to teach ${name}</h3>${saved.length?`<div class="chips">${saved.map(([s,w],i)=>`<div class="chip"><span class="han">${esc(w.hz)}</span><small>${dateLabel(s.day)}</small><button class="btn small sec" data-unsave="${S.saved.length-1-i}">Taught</button></div>`).join('')}</div>`:'<p class="muted">Nothing saved yet. She picks one at the end of each round.</p>'}</div>
+    <div class="panel"><h3>Tricky words (last 2 weeks)</h3>${tricky.length?`<div class="chips">${tricky.map(([w,c])=>`<div class="chip"><span lang="zh-Hans" class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small>${esc(w.en)}</small></span><span class="miss-pill">missed ${c}</span><button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button></div>`).join('')}</div>`:'<p class="muted">No misses yet.</p>'}</div>
+    <div class="panel"><h3>Words she saved to teach ${name}</h3>${saved.length?`<div class="chips">${saved.map(([s,w],i)=>`<div class="chip"><span lang="zh-Hans" class="han">${esc(w.hz)}</span><small>${dateLabel(s.day)}</small><button class="btn small sec" data-unsave="${S.saved.length-1-i}">Taught</button></div>`).join('')}</div>`:'<p class="muted">Nothing saved yet. She picks one at the end of each round.</p>'}</div>
     <div class="panel"><h3>Garden</h3><div class="stages">${counts.map((c,i)=>`<div class="stage">${plant(i,36)}<b>${c}</b>${STAGES[i]}</div>`).join('')}</div>
       <p class="note">${act.length} active words · ${recCount} with your own recording · Chinese computer voice: ${zhVoice?esc(zhVoice.name):'not available'}. Progress and recordings stay in this browser on this device.</p></div>
   </div>`;
@@ -923,7 +984,7 @@ function tabWords(){
       ?`<div class="l2 row"><input id="sen-${w.id}" value="${esc(w.sen||'')}" placeholder="用＿代表这个字" style="max-width:220px"><button class="btn small" data-savesen="${w.id}">Save</button></div>`
       :`<div class="l2">${w.sen?esc(w.sen):'<span class="muted">No sentence</span>'} <button class="btn small sec" data-editsen="${w.id}">Edit sentence</button></div>`;
     return `<div class="wrow ${w.active?'':'off'}">
-      <div class="han">${esc(w.hz)}</div>
+      <div lang="zh-Hans" class="han">${esc(w.hz)}</div>
       <div class="meta"><div class="l1">${esc(w.py)} · ${esc(w.en)} ${esc(w.pic)}</div><div class="l2">${STAGES[w.box]} · ${w.right} right, ${w.wrong} missed · ${audioURL.has(w.id)?'your recording':'computer voice'}</div>${senLine}</div>
       <div class="acts">
         <button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button>
@@ -937,17 +998,17 @@ function tabWords(){
     ${recPanel()}
     <div class="panel"><h3>Add a word</h3>
       <form class="form" id="addf">
-        <label class="f">Chinese<input id="a-hz" required maxlength="8" placeholder="雨"></label>
-        <label class="f">Pinyin<input id="a-py" placeholder="yǔ"></label>
-        <label class="f">Meaning<input id="a-en" placeholder="rain"></label>
-        <label class="f">Picture (emoji)<input id="a-pic" maxlength="12" placeholder="🌧️"></label>
-        <label class="f">Sentence (use ＿ for the word)<input id="a-sen" placeholder="外面下＿了。"></label>
+        <label class="f">Chinese<input id="a-hz" name="hanzi" required maxlength="8" lang="zh-Hans" autocomplete="off" placeholder="e.g. 雨…"></label>
+        <label class="f">Pinyin<input id="a-py" name="pinyin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. yǔ…"></label>
+        <label class="f">Meaning<input id="a-en" name="meaning" autocomplete="off" placeholder="e.g. rain…"></label>
+        <label class="f">Picture (emoji)<input id="a-pic" name="picture" maxlength="12" autocomplete="off" placeholder="e.g. 🌧️…"></label>
+        <label class="f">Sentence (use ＿ for the word)<input id="a-sen" name="sentence" lang="zh-Hans" autocomplete="off" placeholder="e.g. 外面下＿了。…"></label>
         <button class="btn" type="submit">Add</button>
       </form>
       <p class="note">Use words from her tuition and school lists. Words without a picture still work: she hears the word and picks the characters.</p>
     </div>
     <div class="panel"><h3>Add many at once</h3>
-      <textarea id="bulk" placeholder="One word per line: Chinese | pinyin | meaning | emoji | sentence&#10;雨 | yǔ | rain | 🌧️ | 下＿了。&#10;大 | dà | big"></textarea>
+      <textarea id="bulk" name="bulk" lang="zh-Hans" autocomplete="off" spellcheck="false" placeholder="One word per line: Chinese | pinyin | meaning | emoji | sentence&#10;雨 | yǔ | rain | 🌧️ | 下＿了。&#10;大 | dà | big…"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn" id="bulkadd">Add these</button><span class="note" id="bulkmsg" aria-live="polite"></span></div>
     </div>
     <div class="panel"><h3>Words (${S.words.length})</h3>
@@ -976,7 +1037,7 @@ function tabSettings(){
   const sel=(id,label,val,opts)=>`<label class="f" for="${id}">${label}<select id="${id}">${opts.map(([v,l])=>`<option value="${v}" ${String(v)===String(val)?'selected':''}>${l}</option>`).join('')}</select></label>`;
   $('#tabbody').innerHTML=`<div class="stack">
     <div class="panel"><h3>Game</h3><div class="set">
-      <label class="f" for="s-aunty">What she calls you<input id="s-aunty" value="${esc(st.aunty)}" maxlength="20"></label>
+      <label class="f" for="s-aunty">What she calls you<input id="s-aunty" name="nickname" value="${esc(st.aunty)}" maxlength="20" autocomplete="off"></label>
       ${sel('s-len','Questions per round',st.len,[[6,'6'],[8,'8'],[10,'10'],[12,'12']])}
       ${sel('s-new','New words per round',st.newPer,[[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']])}
       ${sel('s-day','Rounds per day',st.perDay,[[1,'1'],[2,'2'],[3,'3'],[99,'No limit']])}
@@ -1002,7 +1063,7 @@ function tabSettings(){
     <div class="panel" id="backup-panel"><h3>Backup</h3>
       <p class="note">The backup includes recordings, so it can be long. To move the game to another phone: tap Copy backup, send the text to yourself (for example on WhatsApp or email), open the game on the other phone, paste it below and choose Restore.</p>
       <div class="row"><button class="btn" id="bk-copy">Copy backup</button><span class="note" id="bkmsg" aria-live="polite"></span></div>
-      <textarea id="bk" style="margin-top:8px" placeholder="Backup text appears here. To restore, paste a backup here and choose Restore."></textarea>
+      <textarea id="bk" name="backup" autocomplete="off" spellcheck="false" style="margin-top:8px" placeholder="Backup text appears here. To restore, paste a backup here and choose Restore…"></textarea>
       <div class="row" style="margin-top:8px">${confirmReset==='restore'?`<button class="btn warn" id="bk-restore-yes">Replace everything with this backup</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="bk-restore">Restore…</button>`}</div>
     </div>
     <div class="panel"><h3>Start over</h3><div class="row">
@@ -1093,8 +1154,8 @@ function tabTrial(){
       <label class="chk" for="tr-on"><input type="checkbox" id="tr-on" ${on?'checked':''}> Keep the trial log</label>
       <p class="note">${n} events from ${new Set(LOG.map(x=>x._s)).size} visit${new Set(LOG.map(x=>x._s)).size===1?'':'s'} · build ${BUILD}</p></div>
     <div class="panel"><h3>Add a note</h3>
-      <p class="note">Write what you saw, for example "she tapped the picture instead of the answers". It is saved with the time and the screen she was on.</p>
-      <textarea id="tr-note" placeholder="What did you notice?" style="min-height:80px;font-family:inherit;font-size:16px"></textarea>
+      <p class="note">Write what you saw, for example “she tapped the picture instead of the answers”. It is saved with the time and the screen she was on.</p>
+      <textarea id="tr-note" name="note" autocomplete="off" placeholder="What did you notice…" style="min-height:80px;font-family:inherit;font-size:16px"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn" id="tr-addnote">Save note</button><span class="note" id="tr-msg" aria-live="polite"></span></div></div>
     <div class="panel"><h3>Send the log to Claude</h3>
       <p class="note">Tap Copy, then paste it into the chat. It starts with a summary, then your notes and flagged questions, then the latest events.</p>
@@ -1115,6 +1176,11 @@ function tabTrial(){
 }
 
 /* ---------- boot ---------- */
+window.addEventListener('popstate',()=>{
+  if(!navDepth)return;navDepth=0;
+  if(view==='play'&&sess&&!sess.preview){finish(true);return;}
+  hush();if(typeof cancelRec==='function')cancelRec();how=null;sess=null;renderGarden();show('garden');
+});
 async function start(){
   applyFlower();renderGarden();show('garden');
   await openDB();await loadAudio();
@@ -1129,3 +1195,5 @@ async function start(){
 try{ if(window.claude&&window.claude.hot&&window.claude.hot.ready){window.claude.hot.ready(start)}else{start()} }catch(e){start()}
 })();
 </script>
+</body>
+</html>

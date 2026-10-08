@@ -4,6 +4,14 @@ A Chinese word game for a Primary 1 learner. Each word is a plant that grows wit
 
 Single self-contained page: open `index.html` in a browser, or host it as a static file (for example GitHub Pages). Progress and recordings stay in the browser on the device where she plays.
 
+## Mobile fit and install
+
+`index.html` is a full document with a mobile viewport tag, safe-area padding, theme colours and a web manifest, so on a phone it lays out at device width and can be added to the Home Screen as a full-screen app (Chrome: ⋮ → Add to Home screen or Install app). The Android Back gesture returns from a round or the Grown-ups corner to the garden instead of leaving the game.
+
+The Claude artifact copy needs a stripped fragment. Rebuild it with `python3 scripts/build-artifact.py <output>`.
+
+Design review: the page was checked against Vercel's Web Interface Guidelines (https://github.com/vercel-labs/web-interface-guidelines): focus states, touch targets, labels and autocomplete on inputs, reduced motion, safe areas, colour-scheme and theme-color, heading order, and `lang="zh-Hans"` on Chinese text so Android picks Simplified Chinese glyphs.
+
 ## Hosting
 
 The game is one static file, so any static host works. With GitHub Pages: Settings → Pages → Deploy from a branch → `main` / root. It is then served at `https://tracyhung19.github.io/garden-game/`.
