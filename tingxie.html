@@ -147,7 +147,7 @@ textarea{min-height:140px}
 <script>
 (function(){
 'use strict';
-const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-09.3';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-10.1';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -157,7 +157,7 @@ const dayDate=n=>new Date(n*86400000);
 const dayInput=n=>dayDate(n).toISOString().slice(0,10);
 const parseDay=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/86400000):null;};
 const dayLong=n=>dayDate(n).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
-const LENIENCY=1.5,SLIP_LIMIT=2,HZ_VER='2.0.1';
+const LENIENCY=2,LENIENCY_TRACE=3,SLIP_LIMIT=2,HZ_VER='2.0.1';
 const CJK=/[㐀-䶿一-鿿]/;
 const chars=hz=>[...hz];
 const pad2=n=>String(n).padStart(2,'0');
@@ -235,7 +235,7 @@ function planFor(L){
     :{head:'The test day has passed',sub:'How did it go? Enter the result, then add the words to the garden.',primary:'real'};
   if(dl===0)return {head:'Test today',sub:'A short practice this morning, then good luck.',primary:'practice'};
   if(dl===1)return {head:'Test tomorrow',sub:mocked?'Mock test done today. Practise the words that were missed.':'Do a mock test today, then practise any missed words.',primary:mocked?'practice':'mock'};
-  if(dl===2||dl===3)return {head:`Test in ${dl} days`,sub:practiced?'Practice done today. A mock test shows what still needs work.':'About 10 minutes of practice today.',primary:practiced?'mock':'practice'};
+  if(dl===2||dl===3)return {head:`Test in ${dl} days`,sub:practiced?'Practice done today. A mock test shows what still needs work.':'A short practice today, 5 words at a time.',primary:practiced?'mock':'practice'};
   return {head:dl==null?'No test date yet':`Test in ${dl} days`,sub:practiced?'Practice done today. See you tomorrow.':'A short practice each day beats one long night before.',primary:practiced?null:'practice'};
 }
 
@@ -288,7 +288,7 @@ function setupPad(){
 }
 function runQuiz(ch,i,trace,tok){
   const mock=sess.mode==='mock'&&!trace;let slips=0;const t0=Date.now();
-  writer.quiz({leniency:LENIENCY,showHintAfterMisses:trace?1:(mock?false:2),markStrokeCorrectAfterMisses:trace?3:(mock?false:5),highlightOnComplete:true,
+  writer.quiz({leniency:trace?LENIENCY_TRACE:LENIENCY,showHintAfterMisses:trace?1:(mock?false:2),markStrokeCorrectAfterMisses:trace?3:(mock?false:5),highlightOnComplete:true,
     onMistake:()=>{if(tok!==padToken)return;slips++;tlog('stroke_miss',{ch,n:slips});flashPad('miss');},
     onCorrectStroke:()=>{if(tok===padToken)flashPad('ok');},
     onComplete:sum=>tok===padToken&&charDone({ch,i,slips:(sum&&sum.totalMistakes!=null)?sum.totalMistakes:slips,ms:Date.now()-t0,trace})});
@@ -298,15 +298,18 @@ function charDone(r){
   const n=chars(curWord().hz).length;
   if(r.trace){tlog('trace_done',{ch:r.ch,slips:r.slips,ms:r.ms});
     if(r.i<n-1)padTimer=setTimeout(()=>{sess.ci=r.i+1;render();},700);else{sess.trace=false;padNote('Traced! Now cover it.');}return;}
-  sess.slips[r.i]=r.slips;tlog('char_done',{ch:r.ch,slips:r.slips,ms:r.ms,mock:sess.mode==='mock'?1:0});afterChar(r.i);
+  sess.slips[r.i]=r.slips;tlog('char_done',{ch:r.ch,slips:r.slips,ms:r.ms,strokes:strokeCount(r.ch),mock:sess.mode==='mock'?1:0});afterChar(r.i);
 }
 function afterChar(i){
   const n=chars(curWord().hz).length;
   if(i<n-1)padTimer=setTimeout(()=>{sess.ci=i+1;render();},700);else padTimer=setTimeout(finishScreen,900);
 }
+const strokeCount=ch=>{const d=hzCache.get(ch);return d&&d.strokes?d.strokes.length:0;};
+const slipLimit=ch=>Math.max(SLIP_LIMIT,Math.ceil(strokeCount(ch)/2));
 function finishScreen(){
   if(!sess||view!=='step')return;const w=curWord(),n=chars(w.hz).length;
-  sess.bad=new Set();for(let i=0;i<n;i++){const s=sess.slips[i];if(s==null||s>SLIP_LIMIT)sess.bad.add(i);}
+  const cs=chars(w.hz);sess.bad=new Set();
+  for(let i=0;i<n;i++){const s=sess.slips[i];if(s==null||s>slipLimit(cs[i]))sess.bad.add(i);}
   sess.verified=true;sess.step='check';tlog('reveal',{hz:w.hz,ms:Date.now()-sess.tStep,screen:1});render();
 }
 
@@ -432,7 +435,8 @@ function curWord(){const L=listById(sess.listId);return wordOf(L,sess.queue[sess
 function buildQueue(L,mode){
   if(mode==='mock')return shuffle(L.words).map(w=>w.id);
   const order={shaky:0,new:1,learning:2,ready:3};
-  return shuffle(L.words).sort((a,b)=>order[wStatus(a)]-order[wStatus(b)]).slice(0,12).map(w=>w.id);
+  const t=today(),tried=w=>w.hist.some(h=>h.d===t&&h.k==='p'),rank=w=>order[wStatus(w)]+(tried(w)?10:0);
+  return shuffle(L.words).sort((a,b)=>rank(a)-rank(b)).slice(0,5).map(w=>w.id);
 }
 function startSession(mode,onlyIds){
   const L=curList();if(!L||!L.words.length)return;
@@ -450,8 +454,8 @@ function beginWord(){
 function boxes(w,kind){
   const cs=chars(w.hz);
   return `<div class="tzgs" lang="zh-Hans">${cs.map((c,i)=>{
-    if(kind==='empty')return `<div class="tzg" aria-hidden="true"></div>`;
-    if(kind==='show')return `<div class="tzg"><span class="c han">${esc(c)}</span></div>`;
+    if(kind==='empty')return `<button class="tzg" data-act="replay" aria-label="Hear the word again"></button>`;
+    if(kind==='show')return `<button class="tzg" data-act="replay" aria-label="${esc(c)}. Tap to hear the word."><span class="c han">${esc(c)}</span></button>`;
     const bad=sess.bad.has(i);
     return `<button class="tzg ${bad?'bad':''}" data-act="toggle" data-i="${i}" aria-pressed="${bad}" aria-label="${esc(c)}, ${bad?'marked wrong':'correct'}"><span class="c han">${esc(c)}</span>${bad?'<span class="x" aria-hidden="true">✗</span>':''}${sess.verified&&sess.slips[i]!=null?`<span class="slip">${sess.slips[i]>=99?'skipped':sess.slips[i]+(sess.slips[i]===1?' slip':' slips')}</span>`:''}</button>`;
   }).join('')}</div>`;
@@ -505,7 +509,7 @@ function finishWord(){
   sess.results.push({id:w.id,ok,bad});
   if(!sess.first.has(w.id))sess.first.set(w.id,{ok,bad});
   tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep,scr:sess.verified?1:0,slips:sess.verified?sess.slips.join(','):undefined,peeks:sess.peeks||undefined});
-  if(!ok&&sess.mode==='practice'&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
+  if(!ok&&sess.mode==='practice'&&!sess.retried.has(w.id)&&Date.now()-sess.t0<360000){sess.retried.add(w.id);sess.queue.push(w.id);}
   sess.i++;
   if(sess.i>=sess.queue.length){endSession();}else{beginWord();render();}
 }
@@ -580,9 +584,9 @@ function reportText(){
   R.push('--- most missed characters ---');R.push([...miss.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([c,n])=>`${c} x${n}`).join(' | ')||'none');
   const cd=ev('char_done'),sk=ev('char_skip'),tr=ev('trace_done'),sl=cd.map(x=>x.slips);
   R.push('--- writing on screen ---');
-  R.push(cd.length||sk.length?`characters written ${cd.length} | slips median ${med(sl)} | more than ${SLIP_LIMIT} slips ${cd.filter(x=>x.slips>SLIP_LIMIT).length} | skipped ${sk.length} | median time ${med(cd.map(x=>x.ms))}ms | traces ${tr.length} | watched ${ev('watch').length} | switched to paper ${ev('use_paper').length}`:'not used');
-  const sm=new Map();cd.forEach(x=>{const e=sm.get(x.ch)||{n:0,s:0};e.n++;e.s+=x.slips;sm.set(x.ch,e);});
-  if(sm.size)R.push('slips per character: '+[...sm.entries()].sort((a,b)=>b[1].s/b[1].n-a[1].s/a[1].n).slice(0,10).map(([c,e])=>`${c} ${(e.s/e.n).toFixed(1)}`).join(' | '));
+  R.push(cd.length||sk.length?`characters written ${cd.length} | slips median ${med(sl)} | over the limit ${cd.filter(x=>x.slips>Math.max(SLIP_LIMIT,Math.ceil((x.strokes||0)/2))).length} | skipped ${sk.length} | median time ${med(cd.map(x=>x.ms))}ms | traces ${tr.length} | watched ${ev('watch').length} | switched to paper ${ev('use_paper').length}`:'not used');
+  const sm=new Map();cd.forEach(x=>{const e=sm.get(x.ch)||{n:0,s:0,k:x.strokes||0};e.n++;e.s+=x.slips;sm.set(x.ch,e);});
+  if(sm.size)R.push('slips per character (average / strokes): '+[...sm.entries()].sort((a,b)=>b[1].s/b[1].n-a[1].s/a[1].n).slice(0,10).map(([c,e])=>`${c} ${(e.s/e.n).toFixed(1)}/${e.k}`).join(' | '));
   R.push(`stroke data: prefetch ok ${ev('hz_prefetch').reduce((a,x)=>a+x.ok,0)} failed ${ev('hz_prefetch').reduce((a,x)=>a+x.fail,0)} | load errors ${ev('hz_err').length} | pad failures ${ev('pad_fail').length}`);
   R.push('--- friction ---');
   const dt=new Map();ev('dead_tap').forEach(x=>{const k=x.on+'@'+x._v;dt.set(k,(dt.get(k)||0)+1)});
@@ -680,7 +684,7 @@ document.addEventListener('change',e=>{const id=e.target.id;
   else if(id==='s-pitch'){S.settings.pitch=+e.target.value;save();tlog('setting',{k:'pitch',val:S.settings.pitch});}
   else if(id==='tr-on'){if(!e.target.checked)tlog('trial_off');S.settings.trial=e.target.checked;save();logFlush();render();}
 });
-document.addEventListener('pointerdown',ev=>{const el=ev.target;if(!el||!el.closest||el.closest('button,a,input,select,textarea,label,summary'))return;
+document.addEventListener('pointerdown',ev=>{const el=ev.target;if(!el||!el.closest||el.closest('button,a,input,select,textarea,label,summary,.pad'))return;
   tlog('dead_tap',{on:(typeof el.className==='string'&&el.className.split(' ')[0])||el.tagName||'?'});},true);
 
 /* ---------- boot ---------- */
