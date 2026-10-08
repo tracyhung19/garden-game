@@ -1,0 +1,65 @@
+/*
+  Zi Garden theme. Colours come from Cellolo (tracyhung19/cellolo, src/lib/theme.ts):
+  the sage-green "brand" scale, the warm grey page (#F2F0EF) and the khaki border (#B2AC88).
+  Change colours here and all three pages follow.
+*/
+:root{
+  color-scheme:light;
+  --brand-50:#eef3ee; --brand-100:#d4e3d3; --brand-200:#a9c7a7; --brand-300:#7eaa7c; --brand-400:#618e5e;
+  --brand-500:#4b6e48; --brand-600:#3d5a3a; --brand-700:#2e442b; --brand-800:#1f2e1d; --brand-900:#10170e;
+
+  --bg:#f2f0ef; --surface:#ffffff; --surface-2:#eef3ee;
+  --ink:#18181b; --ink-2:#5c615a; --muted:#757575;
+  --line:#b2ac88; --grid:#d3cfb6;
+  --leaf:#618e5e; --stem:#4b6e48; --soil:#8c6b4b; --soil-2:#6a4f37; --sun:#d9b44a; --petal:#e5677a;
+  --ok:#3d5a3a; --ok-soft:#d4e3d3; --miss:#b4532f; --miss-soft:#f6e3dc;
+  --accent:#4b6e48; --accent-press:#3d5a3a; --on-accent:#ffffff; --focus:#2f6fd6;
+
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-han:"KaiTi","STKaiti","Kaiti SC","Noto Serif SC","Songti SC","SimSun",serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#10170e; --surface:#1f2e1d; --surface-2:#2e442b;
+    --ink:#eef3ee; --ink-2:#a9c7a7; --muted:#8fa58d;
+    --line:#4b6e48; --grid:#3d5a3a;
+    --leaf:#7eaa7c; --stem:#7eaa7c; --soil:#7a5d42; --soil-2:#5a4430; --sun:#d9b44a;
+    --ok:#9cc79a; --ok-soft:#2e442b; --miss:#e58e72; --miss-soft:#4a2b21;
+    --accent:#7eaa7c; --accent-press:#9cc79a; --on-accent:#10170e; --focus:#8db8ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#10170e; --surface:#1f2e1d; --surface-2:#2e442b;
+  --ink:#eef3ee; --ink-2:#a9c7a7; --muted:#8fa58d;
+  --line:#4b6e48; --grid:#3d5a3a;
+  --leaf:#7eaa7c; --stem:#7eaa7c; --soil:#7a5d42; --soil-2:#5a4430; --sun:#d9b44a;
+  --ok:#9cc79a; --ok-soft:#2e442b; --miss:#e58e72; --miss-soft:#4a2b21;
+  --accent:#7eaa7c; --accent-press:#9cc79a; --on-accent:#10170e; --focus:#8db8ff;
+}
+[data-flower="rose"]{--petal:#e5677a}
+[data-flower="violet"]{--petal:#9b7bd8}
+[data-flower="sky"]{--petal:#4f9fd6}
+[data-flower="orange"]{--petal:#ef8a3c}
+
+/* ---- shared shell: white top bar and bottom tabs with khaki borders, like Cellolo ---- */
+.bar{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  background:var(--surface);border-bottom:1px solid var(--line);
+  margin:calc(-14px - env(safe-area-inset-top,0px)) calc(-1*max(16px,env(safe-area-inset-right,0px))) 14px calc(-1*max(16px,env(safe-area-inset-left,0px)));
+  padding:calc(8px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));
+}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bnav ul{display:flex;list-style:none;margin:0 auto;padding:2px 8px;max-width:600px}
+.bnav li{flex:1;display:flex}
+.bnav a,.bnav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:6px 0;
+  color:var(--muted);font-size:11px;font-family:var(--f-body);background:none;border:0;text-decoration:none;cursor:pointer}
+.bnav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bnav [aria-current="page"]{color:var(--accent);font-weight:700}
+.bnav .hz{font-family:var(--f-han);font-size:20px;line-height:22px}
+html.immersive .bnav{display:none}
+body.hasnav #app{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+html.immersive body.hasnav #app{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}

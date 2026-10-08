@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F0EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10170E" media="(prefers-color-scheme: dark)">
+<meta name="description" content="A Chinese word garden for a new Primary 1 learner.">
+<!--pwa-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zi Garden">
+<!--/pwa-->
+<title>Zi Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Serif+SC:wght@600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:rgba(75,110,72,.18)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+#app{max-width:780px;margin:0 auto;outline:none;
+  padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+p{text-wrap:pretty}
+.skip{position:absolute;left:12px;top:-60px;background:var(--accent);color:var(--on-accent);padding:8px 14px;border-radius:10px;z-index:10;font-weight:700}
+.skip:focus{top:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html.noptr,html.noptr body{overscroll-behavior-y:contain}
+.opt,.tile,.pot,.speak,.big,.sw,.tchip,.next,.dot{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.panel,.soilbed{scroll-margin-top:12px;border:1px solid var(--grid)}
+.upl:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.han{font-family:var(--f-han);font-weight:600}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance}
+.muted{color:var(--ink-2)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* top bar */
+.brand{display:flex;align-items:baseline;gap:8px}
+.brand .zi{font-size:40px;line-height:1;color:var(--accent)}
+.brand .word{margin:0;font-family:var(--f-display);font-weight:800;font-size:28px}
+.swatches{display:flex;gap:8px;align-items:center}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--ink-2);font-size:14px}
+.ghost:hover{border-color:var(--ink-2);color:var(--ink)}
+
+/* play card */
+.hero{background:var(--surface);border-radius:var(--r);padding:20px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line)}
+.hero h2{font-size:26px}
+.big{background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;font-family:var(--f-display);font-weight:800;font-size:26px;padding:12px 36px;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.big:disabled{opacity:.45;cursor:default;transform:none}
+
+/* garden */
+.soilbed{margin-top:18px;background:linear-gradient(var(--surface-2),var(--surface-2));border-radius:var(--r);padding:16px}
+.soilbed h3{font-size:18px;margin-bottom:10px;color:var(--ink-2);font-weight:700}
+.garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:10px}
+.pot{background:var(--surface);border:0;border-radius:14px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:0}
+.pot .hz{font-size:26px;line-height:1.1}
+.pot:hover{outline:2px solid var(--line)}
+.plant{display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:4px}
+
+/* play */
+.playtop{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.dot{width:16px;height:16px;border-radius:50%;background:var(--surface-2);border:2px solid var(--grid)}
+.dot.ok{background:var(--leaf);border-color:var(--leaf)}
+.dot.miss{background:var(--sun);border-color:var(--sun)}
+.dot.now{border-color:var(--ink)}
+.prompt{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:170px;justify-content:center}
+.speak{width:132px;height:132px;border-radius:50%;border:0;background:var(--petal);color:#fff;box-shadow:0 5px 0 color-mix(in srgb,var(--petal) 60%,#000);display:grid;place-items:center}
+.speak:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--petal) 60%,#000)}
+.speak svg{width:64px;height:64px}
+.bigzi{font-size:clamp(84px,24vw,128px);line-height:1}
+.py{font-family:var(--f-display);font-size:22px;color:var(--ink-2);min-height:1.4em}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:var(--r);min-height:128px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.opt .pic{font-size:clamp(48px,13vw,68px);line-height:1.1}
+.opt .hz{font-size:clamp(40px,11vw,58px);line-height:1.1}
+.opt .hz.small{font-size:24px}
+.opt .en{font-family:var(--f-display);font-size:24px;font-weight:700}
+.opt .py{font-size:15px;min-height:0}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--miss);background:var(--miss-soft);opacity:.75}
+.opt:disabled{cursor:default}
+.feedback{text-align:center;margin-top:16px;min-height:64px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.feedback .say{font-family:var(--f-display);font-size:22px}
+.previewtag{margin:-8px 0 10px;font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:4px 10px;display:inline-block}
+.recword{display:flex;gap:16px;align-items:center;justify-content:center;margin:8px 0 14px}
+.recword .han{font-size:64px;line-height:1}
+.recword>span:last-child{font-family:var(--f-display);font-size:22px;line-height:1.2}
+.recbtn{border:0;border-radius:999px;background:var(--miss);color:#fff;font-weight:700;font-size:20px;padding:10px 26px}
+.recbtn.on{background:var(--ink);color:var(--bg);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.65}}
+#rec-filter{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg)}
+.qbtn{width:36px;height:36px;padding:0;font-family:var(--f-display);font-weight:800;font-size:20px;color:var(--accent);border-color:var(--accent)}
+.how{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
+.howtop{display:flex;align-items:center;gap:12px;width:100%}
+.howtop .dots{justify-content:center;flex-wrap:nowrap}
+.dot.past{background:var(--accent);border-color:var(--accent)}
+.howart{background:var(--surface);border-radius:var(--r);padding:20px 12px;width:100%;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;border:1px solid var(--line)}
+.howart .opts{width:100%;margin-top:0}
+.howart .opt{min-height:92px}
+.howart .opt .pic{font-size:44px}
+.mockplay{display:inline-block}
+.arrows.demo{background:none;border:0;cursor:pointer;padding:0}
+.popit{animation:pop .4s}
+.big.sec{background:var(--surface);color:var(--accent);border:2px solid var(--accent);box-shadow:none}
+.finger{font-size:46px;line-height:1}
+.speak.sm{width:84px;height:84px;box-shadow:none}
+.speak.sm svg{width:42px;height:42px}
+.arrows{display:flex;align-items:flex-end;gap:6px;justify-content:center}
+.arrows .ar{font-size:28px;color:var(--ink-2);padding-bottom:22px}
+.howtext{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.15;text-wrap:balance}
+.howsub{color:var(--ink-2);font-size:18px;min-height:1.5em}
+.hownav{display:flex;gap:12px;align-items:center;justify-content:center;width:100%;flex-wrap:wrap}
+.hownav .speak{width:60px;height:60px;box-shadow:none;color:var(--ink-2);background:var(--surface);border:2px solid var(--line)}
+.hownav .speak svg{width:30px;height:30px}
+.step{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start}
+.tick{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;background:var(--surface-2);color:var(--ink-2)}
+.tick.done{background:var(--accent);color:var(--on-accent)}
+.step h3{font-size:19px;margin-bottom:2px}
+.step .stat{font-size:14px;font-weight:700;color:var(--accent);margin-block:4px}
+.step .stat.todo{color:var(--miss)}
+.step p{margin:4px 0}
+.chk{display:flex;gap:8px;align-items:center;margin-top:8px}
+.chk input{width:20px;height:20px}
+details.more{margin-top:4px}
+details.more summary{cursor:pointer;font-weight:700}
+details.more ul{margin:8px 0 0;padding-left:20px}
+.flagbtn{padding:4px 10px;font-size:15px;min-width:44px}
+.txcard{display:flex;align-items:center;gap:14px;margin-top:14px;background:var(--surface);border-radius:var(--r);padding:12px 16px;border:1px solid var(--line);color:var(--ink);text-decoration:none;min-height:56px}
+.txcard .han{font-size:30px;color:var(--accent);line-height:1}
+.txcard .txt{display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.3}
+.txcard .txt span{font-size:14px;color:var(--ink-2)}
+.txcard .go{font-size:24px;color:var(--ink-2)}
+@media (hover:hover){.txcard:hover{outline:2px solid var(--accent)}}
+/* phone: keep the thumb area for answers, anchor the main action to the bottom */
+#v-play:not([hidden]),#v-how:not([hidden]){display:flex;flex-direction:column;min-height:calc(100vh - 54px);min-height:calc(100dvh - 54px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+#v-play .prompt{flex:1 1 auto}
+#v-how .how{flex:1 1 auto}
+.howart{flex:1 1 auto}
+@media (pointer:coarse){
+  .ghost,.btn,.tab,.next,.qbtn{min-height:44px}
+  .btn.small{min-height:40px;padding-inline:14px}
+  .sw{width:44px;height:44px}
+  .qbtn{width:44px;height:44px}
+  .f input,.f select,select{min-height:44px}
+}
+@media (hover:hover){
+  .opt:hover:not(:disabled),.pot:hover,.tchip:hover,.tile:hover:not(:disabled){border-color:var(--accent);outline:none}
+  .btn:hover,.big:hover:not(:disabled),.next:hover,.speak:hover{filter:brightness(1.07)}
+  .tab:hover{color:var(--ink)}
+}
+.opt:active:not(:disabled),.tile:active:not(:disabled),.pot:active,.btn:active{transform:scale(.97)}
+@media (max-width:520px){
+  .hero{flex-direction:column;align-items:stretch;text-align:left}
+  .hero .big{width:100%}
+}
+.chip,.wrow .meta{overflow-wrap:anywhere}
+.next{background:var(--surface);border:2px solid var(--ink);border-radius:999px;padding:6px 28px;font-family:var(--f-display);font-weight:700;font-size:20px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.opt.wrong{animation:shake .3s}
+.opt.right{animation:pop .35s}
+.slots{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.slot{width:56px;height:56px;border:3px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px}
+.slot.filled{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.tray{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.tile{background:var(--surface);border:3px solid var(--line);border-radius:14px;min-width:56px;min-height:56px;font-size:32px;padding:6px 10px}
+.tile:disabled{opacity:.3}
+.tile.wrong{animation:shake .3s}
+.sentbox{font-size:clamp(26px,7vw,36px);text-align:center}
+
+/* done */
+.done{text-align:center;display:flex;flex-direction:column;gap:18px;align-items:center}
+.done h1{font-size:34px}
+.gate h1{font-size:24px}
+.grew{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.grew .pot{animation:pop .5s both}
+.teach{background:var(--surface);border-radius:var(--r);padding:16px;width:100%}
+.teach h3{font-size:22px;margin-bottom:10px}
+.teachgrid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tchip{background:var(--surface-2);border:3px solid transparent;border-radius:14px;padding:6px 14px;font-size:34px}
+.tchip[aria-pressed="true"]{border-color:var(--petal);background:var(--surface)}
+
+/* gate + aunty */
+.panel{background:var(--surface);border-radius:var(--r);padding:18px;border:1px solid var(--line)}
+.gate{max-width:420px;margin:30px auto;display:flex;flex-direction:column;gap:12px}
+.gate input{font-size:22px;padding:8px 12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);width:140px}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:8px 16px;font-weight:700}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.warn{background:var(--miss);color:#fff}
+.btn.small{padding:4px 10px;font-size:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:6px 10px;font-weight:700;color:var(--ink-2)}
+.tab[aria-current="page"]{color:var(--ink);border-color:var(--accent)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.aunty h2{font-size:24px}
+.aunty h3{font-size:18px;margin-bottom:8px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:var(--surface-2);border-radius:10px;padding:6px 2px;text-align:center;font-size:13px}
+.day b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.day.none{opacity:.55}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:12px;padding:6px 10px}
+.chip .han{font-size:26px;line-height:1}
+.chip small{color:var(--ink-2)}
+.miss-pill{background:var(--miss-soft);color:var(--miss);border-radius:999px;padding:0 8px;font-size:13px;font-weight:700}
+.stages{display:flex;gap:10px;flex-wrap:wrap}
+.stage{display:flex;flex-direction:column;align-items:center;font-size:13px;color:var(--ink-2)}
+.stage b{font-size:18px;color:var(--ink);font-variant-numeric:tabular-nums}
+.ideas{background:var(--surface-2);border-radius:12px;padding:12px 14px}
+.ideas li{margin-block:4px}
+.note{font-size:14px;color:var(--ink-2)}
+.warnnote{font-size:14px;background:var(--miss-soft);color:var(--ink);border-radius:10px;padding:8px 12px}
+.words{display:flex;flex-direction:column;gap:8px}
+.wrow{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;background:var(--surface-2);border-radius:12px;padding:8px 10px}
+.wrow.off{opacity:.55}
+.wrow .han{font-size:32px;text-align:center}
+.wrow .meta{min-width:0}
+.wrow .meta .l1{font-weight:700}
+.wrow .meta .l2{font-size:13px;color:var(--ink-2)}
+.wrow .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.upl{position:relative;overflow:hidden}
+.upl input{position:absolute;inset:0;opacity:0;cursor:pointer}
+@media (max-width:520px){.wrow{grid-template-columns:52px 1fr}.wrow .acts{grid-column:1/-1;justify-content:flex-start}}
+.form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end}
+@media (max-width:620px){.form{grid-template-columns:1fr 1fr}}
+label.f{display:flex;flex-direction:column;font-size:14px;color:var(--ink-2);gap:2px}
+.f input,.f select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg);width:100%}
+textarea{min-height:110px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px}
+.set{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="hasnav">
+<a class="skip" href="#app">Skip to the game</a>
+<main id="app" data-flower="rose" tabindex="-1">
+  <section id="v-garden"></section>
+  <section id="v-play" hidden></section>
+  <section id="v-done" hidden></section>
+  <section id="v-how" hidden></section>
+  <section id="v-gate" hidden></section>
+  <section id="v-aunty" class="aunty" hidden></section>
+</main>
+<nav class="bnav" id="bnav" aria-label="Main"></nav>
+
+<script>
+(function(){
+const KEY='zigarden.v1';
+const INTERVAL=[0,1,2,4,7,14,21,30];
+const STAGES=['Seed','Sprout','Leafy','Bud','Flower','Full bloom','Fruit','Big tree'];
+const FLOWERS=[['rose','Pink flowers','#E5677A'],['violet','Purple flowers','#9B7BD8'],['sky','Blue flowers','#4F9FD6'],['orange','Orange flowers','#EF8A3C']];
+const CONFUSABLE=[
+ ['大','太','天','夫','犬'],['人','入','八','个'],['日','目','白','田','旦'],['土','士','王','工'],
+ ['木','本','禾','米','来'],['口','日','回'],['小','少','水'],['鸟','乌','马','岛'],['午','牛','年'],
+ ['已','己','巳'],['手','毛','看'],['月','用','朋'],['上','下','卡'],['妈','吗','马'],['他','她','地'],
+ ['儿','几','九','力'],['山','出','凶'],['子','字','学'],['东','车','乐'],['门','们','问']
+];
+const SAMPLE=[
+ ['猫','māo','cat','🐱','我家有一只＿。'],['狗','gǒu','dog','🐶'],['鱼','yú','fish','🐟','河里有很多＿。'],['鸟','niǎo','bird','🐦'],
+ ['马','mǎ','horse','🐴'],['牛','niú','cow','🐮'],['羊','yáng','sheep','🐑'],['花','huā','flower','🌸','公园里有很多＿。'],
+ ['树','shù','tree','🌳'],['水','shuǐ','water','💧'],['火','huǒ','fire','🔥'],['山','shān','mountain','⛰️'],
+ ['雨','yǔ','rain','🌧️','外面下＿了。'],['书','shū','book','📖','我喜欢看＿。'],['笔','bǐ','pencil','✏️'],['手','shǒu','hand','✋'],
+ ['车','chē','car','🚗','爸爸开＿上班。'],['蛋','dàn','egg','🥚'],['家','jiā','home','🏠'],['月亮','yuèliang','moon','🌙','晚上可以看到＿。'],
+ ['太阳','tàiyáng','sun','☀️','早上＿出来了。'],['星星','xīngxing','star','⭐'],['眼睛','yǎnjing','eyes','👀'],['耳朵','ěrduo','ears','👂'],
+ ['苹果','píngguǒ','apple','🍎','我爱吃红＿。'],['香蕉','xiāngjiāo','banana','🍌'],['米饭','mǐfàn','rice','🍚'],['学校','xuéxiào','school','🏫','我每天去＿。'],
+ ['妈妈','māma','mum','👩','我爱我的＿。'],['爸爸','bàba','dad','👨'],['大象','dàxiàng','elephant','🐘'],['老师','lǎoshī','teacher','🧑‍🏫','＿教我们写字。']
+];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+function today(){const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000);}
+function dayLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{weekday:'short',timeZone:'UTC'});}
+function dateLabel(n){return new Date(n*86400000).toLocaleDateString(undefined,{day:'numeric',month:'short',timeZone:'UTC'});}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function mkWord([hz,py,en,pic,sen]){return {id:uid(),hz:hz.trim(),py:(py||'').trim(),en:(en||'').trim(),pic:(pic||'').trim(),sen:(sen||'').trim(),active:true,box:0,due:0,seen:0,right:0,wrong:0,sample:true};}
+function defaults(){return {tuneV:2,len:10,newPer:5,perDay:99,pinyin:'after',rate:0.6,pitch:1,voice:'',voiceV:2,sfx:true,flower:'rose',aunty:'Aunty',level:'standard',seenHow:false,setup:{},lastBackup:null,trial:true};}
+function fresh(){return {v:1,words:SAMPLE.map(mkWord),log:[],saved:[],settings:defaults()};}
+
+let storageOK=true;
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const s=JSON.parse(raw);
+      if(s&&s.v===1&&Array.isArray(s.words)){if(s.settings&&!s.settings.voiceV){if(s.settings.rate===0.8)s.settings.rate=0.6;s.settings.voiceV=2;}
+        if(s.settings&&!s.settings.tuneV){if(s.settings.perDay===2)s.settings.perDay=99;if(s.settings.newPer===3)s.settings.newPer=5;if(s.settings.len===8)s.settings.len=10;s.settings.tuneV=2;}s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];return s;}}
+  }catch(e){storageOK=false}
+  return fresh();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
+let S=load();
+
+/* ---------- trial log: stays on this device, copied by hand ---------- */
+const BUILD='2026-10-09.2';
+const LOGKEY='zigarden.log.v1',SID=Math.random().toString(36).slice(2,6);
+let LOG=[],logT=null;
+try{LOG=JSON.parse(localStorage.getItem(LOGKEY)||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
+function logFlush(){try{localStorage.setItem(LOGKEY,JSON.stringify(LOG))}catch(e){}}
+function tlog(e,d){
+  if(S.settings.trial===false)return;
+  let v;try{v=view}catch(x){}
+  LOG.push(Object.assign({},d||{},{_t:Date.now(),_s:SID,_e:e,_v:v}));
+  if(LOG.length>2000)LOG=LOG.slice(-2000);
+  clearTimeout(logT);logT=setTimeout(logFlush,500);
+}
+window.addEventListener('pagehide',logFlush);
+document.addEventListener('visibilitychange',()=>{tlog(document.hidden?'hidden':'visible');if(document.hidden)logFlush();});
+window.addEventListener('error',ev=>tlog('error',{msg:String(ev.message||'').slice(0,120),line:ev.lineno}));
+window.addEventListener('unhandledrejection',ev=>tlog('error',{msg:String(ev.reason&&ev.reason.message||ev.reason||'').slice(0,120)}));
+
+/* ---------- audio: recordings (IndexedDB) + Chinese computer voice ---------- */
+const audioURL=new Map(); let db=null, idbOK=false;
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open('zigarden',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('audio');
+  r.onsuccess=()=>{db=r.result;idbOK=true;res()}; r.onerror=()=>res();}catch(e){res()}});}
+function loadAudio(){return new Promise(res=>{if(!db)return res();try{
+  const req=db.transaction('audio','readonly').objectStore('audio').openCursor();
+  req.onsuccess=()=>{const c=req.result;if(c){audioURL.set(c.key,URL.createObjectURL(c.value));c.continue();}else res();};
+  req.onerror=()=>res();}catch(e){res()}});}
+function putAudio(id,blob){const old=audioURL.get(id);if(old)URL.revokeObjectURL(old);audioURL.set(id,URL.createObjectURL(blob));
+  if(db){try{db.transaction('audio','readwrite').objectStore('audio').put(blob,id)}catch(e){}}}
+function delAudio(id){const old=audioURL.get(id);if(old)URL.revokeObjectURL(old);audioURL.delete(id);
+  if(db){try{db.transaction('audio','readwrite').objectStore('audio').delete(id)}catch(e){}}}
+
+let zhVoice=null,zhVoices=[],curAudio=null;
+const FEMALE=/xiaoxiao|xiaoyi|xiaohan|xiaomo|xiaoxuan|xiaorui|xiaoshuang|xiaoyan|tingting|ting-ting|huihui|yaoyao|lili|yu-shu|yushu|meijia|mei-jia|google\s*普通话|female|女/i;
+const MALE=/kangkang|yunxi|yunyang|yunjian|yunxia|yunze|li-mu|limu|\bmale\b|男/i;
+function voiceScore(v){let n=0;
+  if(/^zh[-_]CN/i.test(v.lang)||/^cmn/i.test(v.lang))n+=2;
+  if(MALE.test(v.name))n-=4;
+  if(FEMALE.test(v.name))n+=3;
+  if(/natural|online|premium|enhanced/i.test(v.name))n+=1;
+  return n;}
+function pickVoice(){try{const vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+  zhVoices=vs.filter(v=>(/^zh/i.test(v.lang)||/^cmn/i.test(v.lang))&&!/HK|yue|MO/i.test(v.lang));
+  zhVoice=zhVoices.find(v=>v.name===S.settings.voice)||zhVoices.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;}catch(e){zhVoice=null;zhVoices=[]}}
+try{pickVoice();if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{pickVoice();if(view==='aunty')renderAunty();}}catch(e){}
+const canHear=w=>audioURL.has(w.id)||!!zhVoice;
+function hush(){try{if(curAudio){curAudio.pause();curAudio=null}if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}}
+function speakText(text){if(!zhVoice)return false;try{hush();const ut=new SpeechSynthesisUtterance(text);
+  ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){return false}}
+function saySentence(w){if(!speakText(w.sen.replace(/＿/g,w.hz)))say(w);}
+function say(w){
+  hush();
+  const u=audioURL.get(w.id);
+  if(u){curAudio=new Audio(u);curAudio.play().catch(er=>tlog('audio_err',{hz:w.hz,msg:String(er&&er.name||er).slice(0,40)}));return true;}
+  const okv=speakText(w.hz);if(!okv)tlog('nosound',{hz:w.hz});return okv;
+}
+
+/* ---------- in-page recording (needs the game on its own web address) ---------- */
+const rec={open:false,ids:[],i:0,status:'idle',msg:'',filter:'missing'};
+let mediaRec=null,recStream=null,recTimer=null;
+const canRecord=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+function recMime(){try{return ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t))||''}catch(e){return ''}}
+function openRecorder(startId){
+  rec.ids=(startId||rec.filter==='all'?S.words:S.words.filter(w=>!audioURL.has(w.id))).map(w=>w.id);
+  rec.i=startId?Math.max(0,rec.ids.indexOf(startId)):0;rec.open=true;rec.status='idle';rec.msg='';
+  renderAunty();const el=$('#rec-panel');if(el)el.scrollIntoView({block:'nearest'});
+}
+function stopTracks(){try{if(recStream)recStream.getTracks().forEach(t=>t.stop())}catch(e){}recStream=null;}
+function cancelRec(){clearTimeout(recTimer);try{if(mediaRec&&mediaRec.state!=='inactive'){mediaRec.onstop=null;mediaRec.stop();}}catch(e){}
+  mediaRec=null;stopTracks();rec.open=false;rec.status='idle';rec.msg='';}
+async function startRec(){
+  const w=wordById(rec.ids[rec.i]);if(!w)return;
+  hush();
+  try{recStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});}
+  catch(e){tlog('rec_err',{msg:String(e&&e.name||e)});rec.status='error';rec.msg='The microphone is blocked here. Open the game from its own web address (for example GitHub Pages) and allow the microphone when asked. You can still use Add sound to upload voice memos.';renderAunty();return;}
+  const chunks=[],mt=recMime();
+  try{mediaRec=mt?new MediaRecorder(recStream,{mimeType:mt}):new MediaRecorder(recStream);}catch(e){mediaRec=new MediaRecorder(recStream);}
+  const type=mediaRec.mimeType||mt||'audio/webm';
+  mediaRec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  mediaRec.onstop=()=>{clearTimeout(recTimer);stopTracks();mediaRec=null;
+    const blob=new Blob(chunks,{type});
+    if(blob.size<800){rec.status='error';rec.msg='That was too short. Tap Record, then say the word.';renderAunty();return;}
+    putAudio(w.id,blob);tlog('rec_saved',{hz:w.hz,bytes:blob.size});rec.status='saved';rec.msg='';renderAunty();say(w);};
+  mediaRec.start();rec.status='recording';rec.msg='';renderAunty();
+  recTimer=setTimeout(stopRec,6000);
+}
+function stopRec(){try{if(mediaRec&&mediaRec.state==='recording')mediaRec.stop()}catch(e){}}
+function recPanel(){
+  if(!rec.open)return `<div class="panel" id="rec-panel"><h3>Record words</h3>
+    <p class="note">Say each word slowly and clearly, the way you would say it to her. Recordings always play instead of the computer voice.${canRecord()?'':' This browser cannot record, so use Add sound to upload voice memos.'}</p>
+    <div class="row" style="margin-top:8px"><button class="btn" id="rec-open" ${canRecord()?'':'disabled'}>Record words one by one</button>
+      <select id="rec-filter" aria-label="Which words to record"><option value="missing" ${rec.filter==='missing'?'selected':''}>Only words without a recording</option><option value="all" ${rec.filter==='all'?'selected':''}>All words</option></select></div></div>`;
+  const w=wordById(rec.ids[rec.i]);
+  if(!w)return `<div class="panel" id="rec-panel"><h3>Record words</h3><p>All done. Every word in this list has been through.</p><div class="row"><button class="btn sec" id="rec-close">Close</button></div></div>`;
+  const has=audioURL.has(w.id),busy=rec.status==='recording';
+  const main=busy?`<button class="recbtn on" id="rec-stop">■ Stop</button>`:`<button class="recbtn" id="rec-start">● ${has?'Record again':'Record'}</button>`;
+  const say=busy?'Recording. Say the word, then tap Stop. It stops by itself after 6 seconds.':rec.status==='saved'?'Saved. Listen, then go to the next word or record again.':'';
+  return `<div class="panel" id="rec-panel"><h3>Record words · ${rec.i+1} of ${rec.ids.length}</h3>
+    <div class="recword"><span lang="zh-Hans" class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small class="muted">${esc(w.en)} ${esc(w.pic)}</small></span></div>
+    <div class="row" style="justify-content:center">${main}<button class="btn sec" id="rec-play" ${has&&!busy?'':'disabled'}>▶ Play</button></div>
+    <p class="note" aria-live="polite" style="text-align:center">${say}</p>${rec.msg?`<p class="warnnote">${esc(rec.msg)}</p>`:''}
+    <div class="row" style="justify-content:space-between"><button class="btn sec" id="rec-prev" ${rec.i>0&&!busy?'':'disabled'}>← Back</button><button class="btn sec" id="rec-close">Done</button><button class="btn" id="rec-next" ${busy?'disabled':''}>Next word →</button></div></div>`;
+}
+function bindRec(){
+  const on=(id,f)=>{const el=$(id);if(el)el.onclick=f;};
+  on('#rec-open',()=>openRecorder());
+  const f=$('#rec-filter');if(f)f.onchange=()=>{rec.filter=f.value;};
+  on('#rec-start',startRec);on('#rec-stop',stopRec);
+  on('#rec-play',()=>{const w=wordById(rec.ids[rec.i]);if(w)say(w);});
+  on('#rec-next',()=>{rec.i++;rec.status='idle';rec.msg='';renderAunty();});
+  on('#rec-prev',()=>{rec.i=Math.max(0,rec.i-1);rec.status='idle';rec.msg='';renderAunty();});
+  on('#rec-close',()=>{cancelRec();renderAunty();});
+}
+
+/* ---------- backup with recordings ---------- */
+function getAudioBlob(id){return new Promise(res=>{if(!db)return res(null);try{const r=db.transaction('audio','readonly').objectStore('audio').get(id);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null);}catch(e){res(null)}});}
+function blobToDataURL(b){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>res(null);fr.readAsDataURL(b);});}
+function dataURLToBlob(u){const m=/^data:([^;,]*)(;base64)?,(.*)$/.exec(u||'');if(!m)return null;
+  const bin=m[2]?atob(m[3]):decodeURIComponent(m[3]);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  return new Blob([a],{type:m[1]||'audio/webm'});}
+async function backupText(){const audio={};
+  for(const w of S.words){if(!audioURL.has(w.id))continue;const b=await getAudioBlob(w.id);if(b){const d=await blobToDataURL(b);if(d)audio[w.id]=d;}}
+  return JSON.stringify(Object.assign({},S,{audio}));}
+let ac=null;
+function chime(){if(!S.settings.sfx)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime;
+  [659,880].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(.0001,t+i*.11);g.gain.exponentialRampToValueAtTime(.12,t+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.11+.35);
+    o.connect(g);g.connect(ac.destination);o.start(t+i*.11);o.stop(t+i*.11+.4);});}catch(e){}}
+
+/* ---------- drawing ---------- */
+function plant(box,size){size=size||60;const b=Math.max(0,Math.min(7,box|0));
+  let s=`<svg class="plant" viewBox="0 0 64 72" width="${size}" height="${Math.round(size*72/64)}" aria-hidden="true"><ellipse cx="32" cy="64" rx="24" ry="6" fill="var(--soil)"/>`;
+  const st=(x,y)=>`<path d="M${x} ${y-5} L${x+1.4} ${y-1.4} L${x+5} ${y} L${x+1.4} ${y+1.4} L${x} ${y+5} L${x-1.4} ${y+1.4} L${x-5} ${y} L${x-1.4} ${y-1.4}Z" fill="var(--sun)"/>`;
+  const fruit=(x,y)=>`<circle cx="${x}" cy="${y}" r="3.4" fill="color-mix(in srgb, var(--petal) 75%, black)"/>`;
+  if(b===7){
+    s+=`<rect x="27.5" y="28" width="9" height="36" rx="3" fill="var(--soil-2)"/>`;
+    s+=`<circle cx="22" cy="26" r="13" fill="var(--leaf)"/><circle cx="42" cy="26" r="13" fill="var(--leaf)"/><circle cx="32" cy="15" r="14" fill="var(--leaf)"/>`;
+    s+=fruit(20,25)+fruit(40,22)+fruit(30,13);
+    s+=st(9,12)+st(55,10);
+    return s+'</svg>';
+  }
+  if(b===0){s+=`<ellipse cx="32" cy="60" rx="6" ry="4" fill="var(--soil-2)"/><path d="M30 57.5 q2 -3.5 4 0" stroke="var(--leaf)" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;}
+  else{const top=[0,50,40,32,26,24,24][b];
+    s+=`<path d="M32 62 V${top}" stroke="var(--stem)" stroke-width="3" stroke-linecap="round" fill="none"/>`;
+    const leaf=(y,k)=>`<path d="M32 ${y} q${-13*k} ${-1*k} ${-15*k} ${-12*k} q${13*k} ${-1*k} ${15*k} ${12*k}z" fill="var(--leaf)"/><path d="M32 ${y} q${13*k} ${-1*k} ${15*k} ${-12*k} q${-13*k} ${-1*k} ${-15*k} ${12*k}z" fill="var(--leaf)"/>`;
+    s+=leaf(b===1?56:54,b===1?.55:.9); if(b>=2)s+=leaf(b===2?46:44,.65);
+    if(b===3)s+=`<ellipse cx="32" cy="${top-5}" rx="5.5" ry="8" fill="var(--petal)"/><path d="M26.5 ${top-1} q5.5 4 11 0" fill="var(--leaf)"/>`;
+    if(b>=4){const r=b>=5?7.5:6.5,cy=top-6;for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2-Math.PI/2;s+=`<circle cx="${(32+Math.cos(a)*r).toFixed(1)}" cy="${(cy+Math.sin(a)*r).toFixed(1)}" r="${r}" fill="var(--petal)"/>`;}
+      s+=`<circle cx="32" cy="${cy}" r="${(r*.7).toFixed(1)}" fill="var(--sun)"/>`;}
+    if(b>=5)s+=st(11,14)+st(53,10);
+    if(b===6)s+=fruit(21,top+7)+fruit(43,top+9);
+  }
+  return s+'</svg>';}
+const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+
+/* ---------- views ---------- */
+let view='garden';
+let navDepth=0;
+const NAVI={
+  home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
+  garden:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 13c0-4 3-7 8-7 0 5-3 8-8 7z"/><path d="M12 15c0-3-2-5-6-5 0 4 2 6 6 5z"/></svg>',
+  pencil:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L17 4l3 3L8 19z"/><path d="M14 7l3 3"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'};
+function renderNav(){const el=$('#bnav');if(!el)return;
+  el.innerHTML=`<ul><li><a href="index.html">${NAVI.home}<span>Home</span></a></li><li><a href="garden.html" aria-current="page">${NAVI.garden}<span>Garden</span></a></li><li><a href="tingxie.html">${NAVI.pencil}<span lang="zh-Hans" class="han" style="font-size:13px">听写</span></a></li><li><button type="button" id="nav-gu">${NAVI.lock}<span>Grown-ups</span></button></li></ul>`;
+  $('#nav-gu').onclick=()=>{tlog('nav_grownups');openGate();};}
+function show(v){tlog('nav',{to:v});view=v;document.documentElement.classList.toggle('immersive',v!=='garden');
+  document.documentElement.classList.toggle('noptr',v==='play'||v==='how');
+  if(v!=='garden'&&!navDepth){try{history.pushState({zi:1},'');navDepth=1;}catch(e){}}
+  if(v==='garden'&&navDepth){navDepth=0;try{history.back();}catch(e){}}['garden','play','done','how','gate','aunty'].forEach(k=>{$('#v-'+k).hidden=k!==v});window.scrollTo(0,0);}
+function applyFlower(){$('#app').dataset.flower=S.settings.flower;}
+const sessionsToday=()=>{const d=today();return S.log.filter(l=>l.day===d).length};
+const active=()=>S.words.filter(w=>w.active);
+
+function buildQueue(){
+  const d=today(),len=S.settings.len,act=active();
+  const due=act.filter(w=>w.seen>0&&w.due<=d).sort((a,b)=>a.due-b.due||a.box-b.box);
+  const fresh=shuffle(act.filter(w=>w.seen===0));
+  let q=due.slice(0,len);
+  q=q.concat(fresh.slice(0,Math.max(0,Math.min(len-q.length,S.settings.newPer))));
+  if(q.length<len){const extra=act.filter(w=>!q.includes(w)&&w.seen>0).sort((a,b)=>a.due-b.due||a.box-b.box);q=q.concat(extra.slice(0,len-q.length));}
+  const min=Math.min(5,act.length);
+  if(q.length<min){q=q.concat(fresh.filter(w=>!q.includes(w)).slice(0,min-q.length));}
+  return shuffle(q).map(w=>w.id);
+}
+function dueCount(){const d=today(),act=active();
+  return Math.min(S.settings.len,act.filter(w=>w.seen>0&&w.due<=d).length+Math.min(S.settings.newPer,act.filter(w=>w.seen===0).length));}
+
+function tingxieHint(){
+  try{const t=JSON.parse(localStorage.getItem('zitingxie.v1')),L=t&&t.lists&&t.lists.find(l=>l.id===t.cur);
+    if(!L)return 'Add this week’s word list';
+    if(L.test==null)return `${L.words.length} words`;
+    const dl=L.test-today();
+    return dl<0?(L.real?'Test done':'Test done · add her result'):dl===0?'Test today':dl===1?'Test tomorrow':`Test in ${dl} days`;
+  }catch(e){return 'Add this week’s word list';}
+}
+function renderGarden(){
+  applyFlower();
+  const left=Math.max(0,S.settings.perDay-sessionsToday());
+  const act=active();
+  const n=dueCount();
+  const resting=left<=0;
+  const msg=act.length<3?'Ask a grown-up to add some words.':resting?'Your garden is resting. Come back tomorrow!':n>0?`${n} plants need water today.`:'Everything is watered. Play for extra sunshine!';
+  $('#v-garden').innerHTML=`
+    <div class="bar">
+      <div class="brand"><span lang="zh-Hans" class="zi han">字</span><h1 class="word">Garden</h1></div>
+      <div class="row">
+        <div class="swatches" role="group" aria-label="Flower colour">${FLOWERS.map(([k,l,c])=>`<button class="sw" style="background:${c}" data-flower="${k}" aria-label="${l}" aria-pressed="${S.settings.flower===k}"></button>`).join('')}</div>
+        <button class="ghost qbtn" id="to-how" aria-label="How to play" title="How to play">?</button>
+      </div>
+    </div>
+    <div class="hero">
+      <div><h2>${esc(msg)}</h2><div class="muted">Tap a plant to hear its word.</div></div>
+      <button class="big" id="play" ${resting||act.length<3?'disabled':''}>Play</button>
+    </div>
+    <a class="txcard" id="to-tx" href="tingxie.html"><span class="han" lang="zh-Hans">听写</span><span class="txt"><b>Spelling test practice</b><span>${esc(tingxieHint())}</span></span><span class="go" aria-hidden="true">→</span></a>
+    <div class="soilbed">
+      <h3>My garden · ${act.filter(w=>w.box>=4).length} of ${act.length} in flower</h3>
+      <div class="garden">${act.map(w=>`<button class="pot" data-say="${w.id}" aria-label="${esc(w.hz)}, ${STAGES[w.box]}">${plant(w.box,58)}<span lang="zh-Hans" class="hz han">${esc(w.hz)}</span></button>`).join('')||'<p class="muted">No words yet.</p>'}</div>
+      <div class="legend">${STAGES.map((s,i)=>`<span>${plant(i,22)}${s}</span>`).join('')}</div>
+    </div>`;
+  $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;tlog('flower',{k:b.dataset.flower});save();renderGarden();});
+  $('#v-garden').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{const w=S.words.find(x=>x.id===b.dataset.say);if(w){tlog('plant_tap',{hz:w.hz,box:w.box});say(w);}});
+  $('#to-tx').onclick=()=>tlog('tx_open');
+  $('#to-how').onclick=()=>{tlog('help_tap');openHow(false);};
+  const p=$('#play');if(p)p.onclick=()=>{tlog('play_tap',{first:!S.settings.seenHow});if(!S.settings.seenHow)openHow(true);else startSession();};
+}
+
+/* ---------- session ---------- */
+let sess=null;
+const TYPE_LABEL={listen:'Hear → picture',hearchar:'Hear → characters',read:'Read → picture',readen:'Read → English',recall:'Picture → characters',build:'Build the word',sentence:'Sentence'};
+function levelOf(){return S.settings.level||'standard';}
+function useConfusable(box){
+  const lvl=levelOf();
+  if(lvl==='gentle')return false;
+  if(lvl==='stretch')return box>=2;
+  return box>=4;
+}
+function optCount(box,t){
+  const lvl=levelOf();
+  if(lvl==='gentle')return 3;
+  if(lvl==='stretch')return t==='recall'?5:4;
+  return box>=4?4:3;
+}
+function qType(w,stage){
+  const lvl=levelOf(),raw=stage==null?w.box:stage;
+  const box=lvl==='gentle'&&!(sess&&sess.preview)?Math.min(raw,5):raw;
+  const chars=[...w.hz].length;
+  let t;
+  if(box<=1)t='listen';
+  else if(box<=3)t='hearchar';
+  else if(box<=5)t='read';
+  else if(box===6)t='recall';
+  else{
+    const canBuild=chars>=2,canSentence=!!w.sen;
+    if(canBuild&&canSentence)t=Math.random()<0.5?'sentence':'build';
+    else if(canSentence)t='sentence';
+    else if(canBuild)t='build';
+    else t='recall';
+  }
+  if((t==='listen'||t==='hearchar')&&!canHear(w))t='read';
+  if((t==='listen'||t==='read'||t==='recall')&&!w.pic)t=canHear(w)?'hearchar':'readen';
+  if(t==='build'&&!w.pic)t=canHear(w)?'hearchar':'readen';
+  if(t==='hearchar'&&!canHear(w))t='read';
+  if(t==='read'&&!w.pic)t='readen';
+  return t;
+}
+function confusablesFor(ch){return CONFUSABLE.find(g=>g.includes(ch))||null;}
+function confusableCandidates(w,pool){
+  const related=new Set();
+  [...w.hz].forEach(ch=>{const g=confusablesFor(ch);if(g)g.forEach(c=>{if(c!==ch)related.add(c);});});
+  if(!related.size)return [];
+  return pool.filter(x=>[...x.hz].some(c=>related.has(c)));
+}
+function syntheticConfusable(w,excludeHz){
+  const chars=[...w.hz];
+  for(const i of shuffle(chars.map((_,i)=>i))){
+    const g=confusablesFor(chars[i]);
+    if(!g)continue;
+    const alt=shuffle(g.filter(c=>c!==chars[i]))[0];
+    if(!alt)continue;
+    const swapped=chars.slice();swapped[i]=alt;
+    const hz=swapped.join('');
+    if(hz!==w.hz&&!excludeHz.has(hz))return {id:'syn'+uid(),hz,synthetic:true};
+  }
+  return null;
+}
+function pickDecoyChars(target,otherWords,need,allowConfusable){
+  const targetSet=new Set(target);
+  let pool=[];
+  if(allowConfusable){
+    target.forEach(ch=>{const g=confusablesFor(ch);if(g)g.forEach(c=>{if(!targetSet.has(c)&&!pool.includes(c))pool.push(c);});});
+  }
+  pool=shuffle(pool);
+  const decoys=pool.slice(0,need);
+  if(decoys.length<need){
+    const extra=shuffle([...new Set(otherWords.flatMap(x=>[...x.hz]))].filter(c=>!targetSet.has(c)&&!decoys.includes(c)));
+    decoys.push(...extra.slice(0,need-decoys.length));
+  }
+  return decoys;
+}
+function distractors(w,t,box){
+  box=box==null?w.box:box;
+  const n=Math.max(1,optCount(box,t)-1);
+  let pool=S.words.filter(x=>x.id!==w.id&&x.hz!==w.hz);
+  if(t==='listen'||t==='read')pool=pool.filter(x=>x.pic&&x.pic!==w.pic);
+  if(t==='readen')pool=pool.filter(x=>x.en&&x.en!==w.en);
+  if(t==='hearchar'||t==='recall'||t==='sentence'){const same=pool.filter(x=>[...x.hz].length===[...w.hz].length);if(same.length>=n)pool=same;}
+  const actPool=pool.filter(x=>x.active); if(actPool.length>=n)pool=actPool;
+  const charOnly=t==='hearchar'||t==='recall'||t==='sentence';
+  let chosen=[];
+  if(charOnly&&useConfusable(box))chosen=shuffle(confusableCandidates(w,pool)).slice(0,n);
+  if(chosen.length<n){
+    const rest=shuffle(pool.filter(x=>!chosen.includes(x)));
+    chosen=chosen.concat(rest.slice(0,n-chosen.length));
+  }
+  if(charOnly&&useConfusable(box)&&chosen.length<n){
+    const have=new Set(chosen.map(x=>x.hz).concat([w.hz]));
+    while(chosen.length<n){const syn=syntheticConfusable(w,have);if(!syn)break;have.add(syn.hz);chosen.push(syn);}
+  }
+  return chosen.slice(0,n);
+}
+function startPreview(stage){
+  const pool=shuffle(S.words.filter(w=>w.active));
+  const fits={
+    listen:w=>w.pic&&canHear(w), hearchar:w=>canHear(w), read:w=>w.pic, recall:w=>w.pic,
+    build:w=>w.pic&&[...w.hz].length>=2, sentence:w=>!!w.sen
+  };
+  let items=[];
+  if(stage==='all'){
+    [['listen',0],['hearchar',2],['read',4],['recall',6],['build',7],['sentence',7]].forEach(([t,box])=>{
+      const w=pool.find(x=>fits[t](x)&&!items.some(i=>i.id===x.id));
+      if(w)items.push({id:w.id,box,t});
+    });
+  }else{
+    const want=stage===7?pool.filter(x=>x.sen||(x.pic&&[...x.hz].length>=2)):stage===6||stage>=4?pool.filter(x=>x.pic):pool;
+    (want.length>=3?want:pool).slice(0,3).forEach(w=>items.push({id:w.id,box:stage,t:null}));
+    sess={preview:true};
+    items.forEach(i=>{i.t=qType(S.words.find(w=>w.id===i.id),stage);});
+  }
+  if(!items.length){sess=null;return false;}
+  S.settings.setup=Object.assign(S.settings.setup||{},{tried:true});save();tlog('preview_start',{stage});
+  sess={preview:true,items,queue:items.map(i=>i.id),i:0,total:items.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false,build:null};
+  show('play');renderQ();return true;
+}
+function startSession(){
+  const q=buildQueue(); if(!q.length)return;
+  sess={queue:q,i:0,total:q.length,first:new Map(),retried:new Set(),results:[],grown:[],locked:false,build:null,t0:Date.now(),lifts:new Map(),extras:0,extraCap:Math.max(4,Math.round(q.length*0.6))};
+  tlog('round_start',{n:q.length,words:q.map(id=>{const w=wordById(id);return w?w.hz:'?'}).join(',')});
+  show('play');renderQ();
+}
+const cur=()=>S.words.find(w=>w.id===sess.queue[sess.i]);
+const curItem=()=>sess&&sess.preview?sess.items[sess.i]:null;
+const effBox=w=>Math.min(7,w.box+2*((sess&&sess.lifts&&sess.lifts.get(w.id))||0));
+const curBox=w=>{const it=curItem();return it?it.box:effBox(w)};
+function scheduleStepUp(w,ms){
+  if(levelOf()==='gentle'||sess.preview||ms>7000)return;
+  const n=sess.lifts.get(w.id)||0;
+  if(n>=2||effBox(w)>=7||sess.extras>=sess.extraCap)return;
+  sess.lifts.set(w.id,n+1);sess.extras++;
+  const at=Math.min(sess.queue.length,sess.i+3+Math.floor(Math.random()*3));
+  sess.queue.splice(at,0,w.id);sess.total=sess.queue.length;
+  tlog('stepup',{hz:w.hz,n:n+1,ms});
+}
+function afterRight(w,firstTime,lift,ms){
+  if(sess.preview||(sess.retried.has(w.id)&&!firstTime))return;
+  const hard=['read','recall','build','sentence'].includes(sess.t);
+  if(lift>0&&hard&&w.bd!==today()){const cap=levelOf()==='gentle'?5:7,nb=Math.min(cap,w.box+1);
+    if(nb>w.box){w.box=nb;w.due=today()+INTERVAL[nb];w.bd=today();sess.grown.push(w.id);save();tlog('bonus',{hz:w.hz,box:nb});}}
+  scheduleStepUp(w,ms);
+}
+function dotsHTML(){
+  return sess.queue.slice(0,sess.total).map((id,i)=>{const r=sess.first.get(id);return `<span class="dot ${r===true?'ok':r===false?'miss':''} ${i===Math.min(sess.i,sess.total-1)&&sess.i<sess.total?'now':''}"></span>`}).join('');
+}
+function topBar(){const it=curItem();
+  return `<div class="playtop"><button class="ghost" id="stop" aria-label="${sess.preview?'Stop preview':'Stop and go back to the garden'}">✕ Stop</button><div class="dots" aria-hidden="true">${dotsHTML()}</div>${S.settings.trial!==false?`<button class="ghost flagbtn" id="flag" aria-label="Mark this question for the grown-up" title="Mark this question">⚑</button>`:''}</div>${it?`<p class="previewtag">Preview · ${STAGES[it.box]} · ${TYPE_LABEL[it.t]} · her progress is not changed</p>`:''}`;}
+function renderQ(){
+  const w=cur(); if(!w){finish();return;}
+  const it=curItem();
+  const t=it?it.t:qType(w,effBox(w)); sess.t=t; sess.locked=false;
+  if(t==='build'){sess.build=null;renderBuild(w);return;}
+  const box=curBox(w);
+  const opts=shuffle([w,...distractors(w,t,box)]);
+  sess.qT=Date.now();sess.opts=opts.map(o=>({id:o.id,hz:o.hz,syn:!!o.synthetic}));
+  tlog('q_show',{hz:w.hz,t,box,n:opts.length,hear:canHear(w),rec:audioURL.has(w.id),pre:!!sess.preview});
+  const pyAlways=S.settings.pinyin==='always'&&levelOf()!=='stretch';
+  let prompt='';
+  if(t==='listen'||t==='hearchar')prompt=`<button class="speak" id="speak" aria-label="Hear the word again">${speakerIcon}</button><div class="py muted">Listen, then tap</div>`;
+  else if(t==='recall')prompt=`<div class="bigzi" role="img" aria-label="${esc(w.en)}">${esc(w.pic)}</div><div class="py">${esc(w.en)}</div>`;
+  else if(t==='sentence')prompt=`<div lang="zh-Hans" class="sentbox han">${esc(w.sen)}</div>${w.pic?`<div class="bigzi" style="font-size:48px">${esc(w.pic)}</div>`:''}`;
+  else prompt=`<div lang="zh-Hans" class="bigzi han">${esc(w.hz)}</div><div class="py">${pyAlways?esc(w.py):''}</div>`;
+  const optHTML=o=>{
+    if(t==='listen')return `<span class="pic">${esc(o.pic)}</span><span lang="zh-Hans" class="hz han small">${esc(o.hz)}</span>`;
+    if(t==='hearchar'||t==='recall'||t==='sentence')return `<span lang="zh-Hans" class="hz han">${esc(o.hz)}</span>${pyAlways&&o.py?`<span class="py">${esc(o.py)}</span>`:''}`;
+    if(t==='read')return `<span class="pic">${esc(o.pic)}</span>`;
+    return `<span class="en">${esc(o.en)}</span>`;
+  };
+  $('#v-play').innerHTML=`${topBar()}
+    <div class="prompt">${prompt}</div>
+    <div class="opts">${opts.map(o=>`<button class="opt" data-id="${o.id}" aria-label="${esc(t==='read'?o.en:t==='readen'?o.en:o.hz)}">${optHTML(o)}</button>`).join('')}</div>
+    <div class="feedback" id="fb" aria-live="polite"></div>`;
+  $('#stop').onclick=()=>{finish(true)};
+  const sp=$('#speak');
+  if(sp){
+    setTimeout(()=>say(w),250);
+    let usedReplay=false;
+    sp.onclick=()=>{
+      tlog('replay',{hz:w.hz});
+      if(levelOf()==='stretch'&&t==='hearchar'){
+        if(usedReplay)return;
+        usedReplay=true;say(w);sp.disabled=true;
+      }else say(w);
+    };
+  }
+  $('#v-play').querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(b,w));
+}
+function renderBuild(w){
+  if(!sess.build||sess.build.wid!==w.id){
+    const target=[...w.hz];
+    const need=2+Math.floor(Math.random()*2);
+    const decoys=pickDecoyChars(target,S.words.filter(x=>x.id!==w.id),need,useConfusable(curBox(w)));
+    const tiles=shuffle([...target.map((ch,i)=>({id:'t'+i+'-'+uid(),ch,real:true,used:false})),...decoys.map((ch,i)=>({id:'d'+i+'-'+uid(),ch,real:false,used:false}))]);
+    sess.build={wid:w.id,target,filled:[],tiles,missed:false};
+    sess.qT=Date.now();tlog('q_show',{hz:w.hz,t:'build',box:curBox(w),n:tiles.length,hear:canHear(w),rec:audioURL.has(w.id),pre:!!sess.preview});
+    setTimeout(()=>say(w),250);
+  }
+  const b=sess.build;
+  const prompt=`<button class="speak" id="speak" aria-label="Hear the word again">${speakerIcon}</button>${w.pic?`<div class="bigzi" style="font-size:56px">${esc(w.pic)}</div>`:''}`;
+  const slots=b.target.map((ch,i)=>`<div class="slot han ${i<b.filled.length?'filled':''}">${i<b.filled.length?esc(b.filled[i]):''}</div>`).join('');
+  const tray=b.tiles.map(t=>`<button lang="zh-Hans" class="tile han" data-tile="${t.id}" ${t.used?'disabled':''}>${esc(t.ch)}</button>`).join('');
+  $('#v-play').innerHTML=`${topBar()}
+    <div class="prompt">${prompt}</div>
+    <div class="slots">${slots}</div>
+    <div class="tray">${tray}</div>
+    <div class="feedback" id="fb" aria-live="polite"></div>`;
+  $('#stop').onclick=()=>{finish(true)};
+  const sp=$('#speak'); if(sp)sp.onclick=()=>{tlog('replay',{hz:w.hz});say(w);};
+  $('#v-play').querySelectorAll('[data-tile]').forEach(btn=>btn.onclick=()=>buildTap(btn,w));
+}
+function buildTap(btn,w){
+  if(sess.locked)return;
+  const b=sess.build,id=btn.dataset.tile,tile=b.tiles.find(x=>x.id===id);
+  if(!tile||tile.used)return;
+  const need=b.target[b.filled.length];
+  if(tile.real&&tile.ch===need){
+    tile.used=true;b.filled.push(tile.ch);
+    if(b.filled.length===b.target.length){
+      sess.locked=true;
+      const firstTime=!sess.first.has(w.id),ok=!b.missed;
+      tlog('q_ans',{hz:w.hz,t:'build',ok,first:firstTime,ms:Date.now()-(sess.qT||Date.now()),pre:!!sess.preview});
+      const lift=(sess.lifts&&sess.lifts.get(w.id))||0;
+      if(firstTime){sess.first.set(w.id,ok);if(!sess.preview){sess.results.push({id:w.id,ok,t:'build'});applyResult(w,ok);}}
+      if(ok)afterRight(w,firstTime,lift,Date.now()-(sess.qT||Date.now()));
+      chime();say(w);
+      const showPy=S.settings.pinyin!=='never';
+      renderBuild(w);
+      $('#fb').innerHTML=`<div class="say"><span lang="zh-Hans" class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
+      setTimeout(advance,1500);
+    }else renderBuild(w);
+  }else{
+    btn.classList.add('wrong');
+    setTimeout(()=>btn.classList.remove('wrong'),300);
+    tlog('b_wrong',{hz:w.hz,need,tapped:tile.ch,real:tile.real});
+    if(!b.missed){
+      b.missed=true;
+      if(!sess.preview&&!sess.first.has(w.id)&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);sess.total=sess.queue.length;}
+    }
+  }
+}
+function applyResult(w,ok){
+  const d=today(),wasDue=w.seen===0||w.due<=d,cap=levelOf()==='gentle'?5:7;
+  w.seen++;w.last=d;
+  if(ok){w.right++;if(wasDue){const nb=Math.min(cap,w.box+1);if(nb>w.box)sess.grown.push(w.id);w.box=nb;w.due=d+INTERVAL[nb];}}
+  else{w.wrong++;w.box=Math.max(0,w.box-2);w.due=d+1;}
+  save();
+}
+function answer(btn,w){
+  if(sess.locked)return; sess.locked=true;
+  const ok=btn.dataset.id===w.id, firstTime=!sess.first.has(w.id);
+  const pk=(sess.opts||[]).find(o=>o.id===btn.dataset.id);
+  tlog('q_ans',{hz:w.hz,t:sess.t,ok,first:firstTime,ms:Date.now()-(sess.qT||Date.now()),pick:ok?undefined:(pk?pk.hz:'?'),syn:pk&&pk.syn?1:undefined,pre:!!sess.preview});
+  const lift=(sess.lifts&&sess.lifts.get(w.id))||0,msq=Date.now()-(sess.qT||Date.now());
+  if(firstTime){sess.first.set(w.id,ok);if(!sess.preview){sess.results.push({id:w.id,ok,t:sess.t});applyResult(w,ok);}}
+  if(ok)afterRight(w,firstTime,lift,msq);
+  $('#v-play').querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.dataset.id===w.id)b.classList.add('right');});
+  const showPy=S.settings.pinyin!=='never';
+  const fb=$('#fb');
+  if(ok){chime();
+    if(sess.t==='read'||sess.t==='readen')say(w);
+    else if(sess.t==='sentence')saySentence(w);
+    fb.innerHTML=`<div class="say"><span lang="zh-Hans" class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div>`;
+    setTimeout(advance,(sess.t==='read'||sess.t==='readen'||sess.t==='sentence')?1500:1100);
+  }else{
+    btn.classList.add('wrong');say(w);
+    if(!sess.preview&&firstTime&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);sess.total=sess.queue.length;}
+    fb.innerHTML=`<div class="say">This one is <span lang="zh-Hans" class="han">${esc(w.hz)}</span> ${showPy?esc(w.py):''} ${esc(w.pic)}</div><button class="next" id="next">Next</button>`;
+    $('#next').onclick=advance; $('#next').focus();
+  }
+}
+function advance(){if(view!=='play')return;sess.i++;if(sess.i>=sess.queue.length)finish();else renderQ();}
+function finish(stopped){
+  try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}
+  if(sess&&sess.preview){tlog('preview_end',{at:sess.i,stopped:!!stopped});sess=null;tab='settings';renderAunty();show('aunty');const el=$('#preview-panel');if(el)el.scrollIntoView();return;}
+  if(sess&&!sess.preview)tlog(stopped?'round_quit':'round_end',{ans:sess.results.length,ok:sess.results.filter(r=>r.ok).length,planned:sess.total,at:sess.i,ms:sess.t0?Date.now()-sess.t0:undefined});
+  if(sess&&sess.results.length){S.log.push({day:today(),ts:Date.now(),results:sess.results});if(S.log.length>400)S.log=S.log.slice(-400);save();}
+  if(stopped||!sess||!sess.results.length){sess=null;renderGarden();show('garden');return;}
+  renderDone();show('done');
+}
+function renderDone(){
+  const grown=[...new Set(sess.grown)].map(id=>S.words.find(w=>w.id===id)).filter(Boolean);
+  const words=[...new Set(sess.results.map(r=>r.id))].map(id=>S.words.find(w=>w.id===id)).filter(Boolean);
+  const name=esc(S.settings.aunty||'Aunty');
+  $('#v-done').innerHTML=`<div class="done">
+    <h1>${grown.length?'Your garden grew!':'All watered!'}</h1>
+    ${grown.length?`<div class="grew">${grown.map((w,i)=>`<div class="pot" style="animation-delay:${i*90}ms">${plant(w.box,64)}<span lang="zh-Hans" class="hz han">${esc(w.hz)}</span></div>`).join('')}</div>`:'<p class="muted">Tricky words come back soon so they can grow.</p>'}
+    <div class="teach"><h3>Which word will you teach ${name}?</h3>
+      <div class="teachgrid">${words.map(w=>`<button lang="zh-Hans" class="tchip han" data-t="${w.id}" aria-pressed="false">${esc(w.hz)}</button>`).join('')}</div>
+      <p class="muted" id="tmsg" aria-live="polite">Pick one. Show ${name} next time!</p></div>
+    <button class="big" id="again">Another round</button>
+    <button class="big sec" id="home">Back to my garden</button></div>`;
+  $('#v-done').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.t,d=today();
+    $('#v-done').querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    S.saved=S.saved.filter(s=>!(s.day===d&&s.fromSess===sess.ts0));
+    S.saved.push({id,day:d,fromSess:sess.ts0});save();
+    const w=S.words.find(x=>x.id===id); if(w)say(w);
+    tlog('teach',{hz:w&&w.hz});
+    $('#tmsg').textContent=`Saved! Teach ${S.settings.aunty||'Aunty'} this word next time.`;
+  });
+  sess.ts0=sess.ts0||Date.now();
+  $('#again').onclick=()=>{tlog('again_tap');sess=null;startSession();};
+  $('#home').onclick=()=>{sess=null;renderGarden();show('garden');};
+}
+
+/* ---------- how to play (child) ---------- */
+let how=null;
+function sayEn(text){try{if(!window.speechSynthesis)return;hush();const ut=new SpeechSynthesisUtterance(text);ut.lang='en-GB';ut.rate=.85;speechSynthesis.speak(ut);}catch(e){}}
+function howSteps(){const nm=S.settings.aunty||'Aunty';return [
+  {text:'Tap Play.',sub:'A few questions each day.',
+   art:`<button class="big mockplay" data-demo="play" aria-label="Play. Tap to try it.">Play</button><div class="finger" aria-hidden="true">👆</div>`},
+  {text:'Listen. Tap the match.',sub:'Not sure? Have a go. Oops is OK!',
+   art:`<button class="speak sm" data-demo="speak" aria-label="Hear the word">${speakerIcon}</button><div class="opts"><button class="opt" data-demo="fish" aria-label="fish"><span class="pic">🐟</span></button><button class="opt" data-demo="car" aria-label="car"><span class="pic">🚗</span></button><button class="opt" data-demo="rain" aria-label="rain"><span class="pic">🌧️</span></button></div>`},
+  {text:'Right answers grow your plant.',sub:'Come back tomorrow to water it.',
+   art:`<button class="arrows demo" data-demo="grow" aria-label="Tap to see it grow">${plant(0,54)}<span class="ar">→</span>${plant(2,58)}<span class="ar">→</span>${plant(5,66)}</button>`},
+  {text:`Pick a word to teach ${nm}.`,sub:`Show ${nm} next time!`,
+   art:`<div class="row" style="justify-content:center;flex-wrap:nowrap"><button lang="zh-Hans" class="tchip han" data-demo="teach" style="font-size:64px;border-color:var(--petal);background:var(--surface)" aria-label="猫. Tap to hear it.">猫</button><div class="finger" aria-hidden="true">💬</div></div>`}
+];}
+function openHow(thenPlay){tlog('how_open',{play:!!thenPlay});how={i:0,play:!!thenPlay};S.settings.seenHow=true;save();renderHow(true);show('how');}
+function renderHow(read){
+  const st=howSteps(),h=how,cur=st[h.i],last=h.i===st.length-1;
+  tlog('how_step',{i:h.i});
+  $('#v-how').innerHTML=`<div class="how">
+    <div class="howtop"><button class="ghost" id="how-close" aria-label="Close how to play">✕</button><div class="dots" aria-hidden="true">${st.map((_,i)=>`<span class="dot ${i<h.i?'past':''} ${i===h.i?'now':''}"></span>`).join('')}</div></div>
+    <div class="howart">${cur.art}</div>
+    <h1 class="howtext" aria-live="polite">${esc(cur.text)}</h1>
+    <div class="howsub">${esc(cur.sub)}</div>
+    <div class="hownav">
+      <button class="ghost" id="how-back" ${h.i?'':'disabled'}>← Back</button>
+      ${window.speechSynthesis?`<button class="speak" id="how-say" aria-label="Read it to me">${speakerIcon}</button>`:''}
+      <button class="big" id="how-next">${last?(h.play?'Let’s play!':'Got it'):'Next →'}</button>
+    </div></div>`;
+  const end=()=>{hush();const go=h.play;tlog('how_end',{play:go});how=null;if(go)startSession();else{renderGarden();show('garden');}};
+  $('#how-close').onclick=()=>{hush();tlog('how_close',{i:h.i});how=null;renderGarden();show('garden');};
+  $('#how-back').onclick=()=>{if(h.i>0){h.i--;renderHow(true);}};
+  $('#how-next').onclick=()=>{if(last)end();else{h.i++;renderHow(true);}};
+  const sy=$('#how-say');if(sy)sy.onclick=()=>sayEn(cur.text+' '+cur.sub);
+  $('.howart').addEventListener('click',e=>{
+    const d=e.target.closest('[data-demo]');
+    if(!d){tlog('how_tap',{i:h.i});sayEn(cur.text+' '+cur.sub);return;}
+    const k=d.dataset.demo;tlog('how_demo',{k,i:h.i});
+    if(k==='play'){chime();if(!last){h.i++;renderHow(true);}}
+    else if(k==='speak'){if(!speakText('鱼'))chime();}
+    else if(k==='fish'){chime();d.classList.add('right');setTimeout(()=>{if(how===h&&!last){h.i++;renderHow(true);}},900);}
+    else if(k==='car'||k==='rain'){d.classList.add('wrong');setTimeout(()=>d.classList.remove('wrong'),400);}
+    else if(k==='grow'){chime();d.classList.add('popit');setTimeout(()=>d.classList.remove('popit'),500);}
+    else if(k==='teach'){speakText('猫');d.setAttribute('aria-pressed','true');}
+  });
+  $('#how-next').focus();
+  if(read)sayEn(cur.text);
+}
+
+/* ---------- grown-ups gate ---------- */
+let gateAns=0;
+function openGate(){const a=11+Math.floor(Math.random()*29),b=11+Math.floor(Math.random()*29);gateAns=a+b;
+  $('#v-gate').innerHTML=`<form class="panel gate" id="gform"><h1>Grown-ups only</h1><label class="f" for="gin">What is ${a} + ${b}?</label>
+    <div class="row"><input id="gin" name="answer" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="go"><button class="btn" type="submit">Open</button><button class="btn sec" type="button" id="gback">Back</button></div>
+    <p class="note" id="gmsg" aria-live="polite"></p></form>`;
+  show('gate');$('#gin').focus();
+  $('#gback').onclick=()=>show('garden');
+  $('#gform').onsubmit=e=>{e.preventDefault();const gok=parseInt($('#gin').value,10)===gateAns;tlog('gate',{ok:gok});if(gok){tab=setupLeft()>0?'setup':'visit';renderAunty();show('aunty');}else{$('#gmsg').textContent='Not quite. Try again.';}};
+}
+
+/* ---------- grown-ups corner ---------- */
+let tab='setup';
+function renderAunty(){
+  const name=esc(S.settings.aunty||'Aunty'),left=setupLeft();
+  $('#v-aunty').innerHTML=`<div class="bar"><div class="brand"><span lang="zh-Hans" class="zi han">字</span><h1 class="word">Grown-ups</h1></div><button class="ghost" id="aback">Back to garden</button></div>
+    <nav class="tabs" aria-label="Grown-ups sections">
+      ${[['setup',left?`Set up (${left} to do)`:'Set up'],['visit','Before the visit'],['words','Words & sounds'],['settings','Settings & backup'],['trial','Trial log']].map(([k,l])=>`<button class="tab" data-tab="${k}" ${tab===k?'aria-current="page"':''} >${l}</button>`).join('')}
+    </nav><h2 class="sr" id="tabtitle"></h2><div id="tabbody"></div>`;
+  $('#aback').onclick=()=>{cancelRec();renderGarden();show('garden')};
+  $('#v-aunty').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;tlog('tab',{t:tab});renderAunty();});
+  const tt=$('#tabtitle');if(tt)tt.textContent=({setup:'Set up',visit:'Before the visit',words:'Words and sounds',settings:'Settings and backup',trial:'Trial log'})[tab]||'';
+  ({setup:tabSetup,visit:tabVisit,words:tabWords,settings:tabSettings,trial:tabTrial})[tab](name);
+}
+function wordById(id){return S.words.find(w=>w.id===id)}
+function goTab(t,scrollSel){tab=t;tlog('tab',{t});renderAunty();if(scrollSel){const el=$(scrollSel);if(el)el.scrollIntoView({block:'start'});}}
+function homeStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}}
+function setupSteps(){
+  const su=S.settings.setup||{},custom=S.words.filter(w=>!w.sample).length,rec=S.words.filter(w=>audioURL.has(w.id)).length;
+  const ago=S.settings.lastBackup==null?null:today()-S.settings.lastBackup;
+  return [
+    {id:'home',req:false,done:homeStandalone()||!!su.home},
+    {id:'words',req:true,done:custom>0,custom},
+    {id:'voice',req:false,done:rec>0,rec},
+    {id:'try',req:true,done:!!su.tried||S.log.length>0},
+    {id:'backup',req:false,done:ago!=null&&ago<=7,ago}
+  ];
+}
+const setupLeft=()=>setupSteps().filter(x=>x.req&&!x.done).length;
+function tabSetup(name){
+  const steps=setupSteps(),by=Object.fromEntries(steps.map(x=>[x.id,x]));
+  const nSample=S.words.filter(w=>w.sample).length,doneN=steps.filter(x=>x.done).length;
+  const row=(n,x,title,stat,body,btns)=>`<div class="panel step"><div class="tick ${x.done?'done':''}" aria-hidden="true">${x.done?'✓':n}</div><div>
+    <h3>${title}${x.req?'':' <span class="muted" style="font-weight:400;font-size:14px">(optional)</span>'}</h3>
+    <div class="stat ${x.done||!x.req?'':'todo'}">${x.done?'Done: ':x.req?'To do: ':'Not yet: '}${stat}</div>${body}<div class="row" style="margin-top:8px">${btns}</div></div></div>`;
+  const home=by.home,standalone=homeStandalone();
+  const ago=by.backup.ago;
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div><h2>Set up in 5 steps</h2><p class="note">${doneN} of 5 done. Steps marked optional can wait.</p></div>
+    ${S.settings.trial!==false?`<div class="panel"><h3>Testing it with her?</h3><p class="note">The game keeps a private log on this device. In a round, tap ⚑ to mark a question. Afterwards open the Trial log tab, add a note and copy the log for Claude.</p><div class="row" style="margin-top:8px"><button class="btn sec" data-go="trial">Open Trial log</button></div></div>`:''}
+    ${row(1,home,'Put the game on the Home Screen',standalone?'you are using the Home Screen icon now':(S.settings.setup&&S.settings.setup.home?'you said you added it':'not yet'),
+      `<p>Do this first. On iPhone and iPad the Home Screen icon and Safari can keep separate copies of her garden, so add words and recordings from the icon.</p>
+       <p><b>iPhone or iPad (Safari):</b> tap Share, then Add to Home Screen.<br><b>Android (Chrome):</b> tap ⋮, then Add to Home screen.</p>
+       ${standalone?'':`<label class="chk" for="su-home"><input type="checkbox" id="su-home" ${S.settings.setup&&S.settings.setup.home?'checked':''}> I have added it</label>`}`,'')}
+    ${row(2,by.words,'Add her real words',by.words.custom?`${by.words.custom} of your own words`:`only the ${nSample} sample words so far`,
+      `<p>Use words from her tuition and school lists. Add them one at a time, or paste a whole list. Pause or delete the samples you do not need.</p>`,
+      `<button class="btn" data-go="words">Open Words & sounds</button>`)}
+    ${row(3,by.voice,'Add your voice',by.voice.rec?`${by.voice.rec} words with your recording`:(zhVoice?'using the computer voice for now':'no sound on this device yet'),
+      `<p>A recording plays instead of the computer voice and sounds gentler. Say each word slowly, the way you would to her.${canRecord()?'':' This browser cannot record. Upload voice memos instead.'}</p>`,
+      `<button class="btn ${by.voice.done?'sec':''}" data-go="words">Record words</button>`)}
+    ${row(4,by.try,'Try a round yourself',by.try.done?'you have tried it':'not yet',
+      `<p>See what she will see, then use Preview a level to try the harder questions. Nothing you do there changes her garden.</p>`,
+      `<button class="btn" id="su-how">See how to play</button><button class="btn sec" data-go="settings" data-scroll="#preview-panel">Preview a level</button>`)}
+    ${row(5,by.backup,'Back up once a week',ago==null?'no backup yet':ago===0?'last backup today':`last backup ${ago} day${ago===1?'':'s'} ago`,
+      `<p>Copy the backup text and keep it in your notes. It includes your recordings. It is also how you move her garden to another phone.</p>`,
+      `<button class="btn ${by.backup.done?'sec':''}" data-go="settings" data-scroll="#backup-panel">Open Backup</button>`)}
+    <div class="panel"><h3>Your two visits a week</h3><ul class="ideas">
+      <li><b>First visit:</b> she plays one round next to you. Let the game do the correcting. She picks a word to teach you.</li>
+      <li><b>Second visit:</b> ask her to teach you that word, and play the confused student. Use the Before the visit tab for ideas.</li>
+      <li><b>In between:</b> up to ${S.settings.perDay>=99?'any number of':S.settings.perDay} short rounds a day, about 5 minutes.</li></ul></div>
+    <div class="panel"><h3>What to expect</h3><p class="note">A word grows one stage each time she gets it right first time on a day it is due. At best that is Flower after 1 week, Full bloom after 2, Fruit after 4 and Big tree after 7. A miss sends it back sooner. If she skips a week, nothing is lost.</p>
+      <details class="more"><summary>How the game picks questions</summary>
+        <ul><li><b>Seed, Sprout:</b> she hears the word and taps the picture.</li>
+        <li><b>Leafy, Bud:</b> she hears the word and taps the characters.</li>
+        <li><b>Flower, Full bloom:</b> she sees the characters and taps the picture.</li>
+        <li><b>Fruit:</b> she sees the picture and taps the characters.</li>
+        <li><b>Big tree:</b> she builds the word from tiles, or fills the gap in a sentence.</li></ul>
+        <p class="note">After a right answer the word waits 1, 2, 4, 7, 14, 21, then 30 days. A miss drops it two stages and brings it back tomorrow. The Challenge setting changes how many choices she sees and whether look-alike characters appear. Gentle stops at Full bloom.</p></details></div>
+  </div>`;
+  const tb=$('#tabbody');
+  const sh=$('#su-home');if(sh)sh.onchange=()=>{S.settings.setup=Object.assign(S.settings.setup||{},{home:sh.checked});save();renderAunty();};
+  tb.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>goTab(b.dataset.go,b.dataset.scroll));
+  $('#su-how').onclick=()=>openHow(false);
+}
+function tabVisit(name){
+  const d=today();
+  const days=[...Array(7)].map((_,i)=>d-6+i).map(n=>{const ls=S.log.filter(l=>l.day===n);const rs=ls.flatMap(l=>l.results);const ok=rs.filter(r=>r.ok).length;
+    return `<div class="day ${ls.length?'':'none'}">${dayLabel(n)}<b>${ls.length}</b>${rs.length?Math.round(ok*100/rs.length)+'%':'–'}</div>`;}).join('');
+  const miss=new Map();S.log.filter(l=>l.day>=d-13).forEach(l=>l.results.forEach(r=>{if(!r.ok)miss.set(r.id,(miss.get(r.id)||0)+1)}));
+  const tricky=[...miss.entries()].map(([id,c])=>[wordById(id),c]).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const saved=S.saved.slice(-10).reverse().map(s=>[s,wordById(s.id)]).filter(x=>x[1]);
+  const act=active(); const counts=STAGES.map((_,i)=>act.filter(w=>w.box===i).length);
+  const ideas=[];
+  if(saved.length)ideas.push(`Ask her to teach you <span lang="zh-Hans" class="han">${esc(saved[0][1].hz)}</span>. Play the confused student.`);
+  if(tricky.length)ideas.push(`Use ${tricky.slice(0,3).map(([w])=>`<span lang="zh-Hans" class="han">${esc(w.hz)}</span>`).join(', ')} in real conversation: pointing, cooking, reading signs.`);
+  const newOnes=act.filter(w=>w.seen===0).slice(0,3);
+  if(newOnes.length)ideas.push(`Coming up next in the game: ${newOnes.map(w=>`<span lang="zh-Hans" class="han">${esc(w.hz)}</span>`).join(', ')}. Say them out loud before she meets them.`);
+  if(!ideas.length)ideas.push('No play yet this week. Play one round together at the next visit.');
+  const recCount=S.words.filter(w=>audioURL.has(w.id)).length;
+  const typeStats=new Map();
+  S.log.filter(l=>l.day>=d-13).forEach(l=>l.results.forEach(r=>{const s=typeStats.get(r.t)||{ok:0,n:0};s.n++;if(r.ok)s.ok++;typeStats.set(r.t,s);}));
+  const hardest=[...typeStats.entries()].filter(([,s])=>s.n>=3).map(([t,s])=>[t,Math.round(s.ok*100/s.n)]).sort((a,b)=>a[1]-b[1]);
+  const warn=[];
+  if(!zhVoice)warn.push('This device has no Chinese computer voice, so words without a recording will only use reading questions. Upload recordings in Words & sounds.');
+  if(!storageOK)warn.push('This browser is not saving progress (private window or blocked storage). Progress will be lost when the page closes.');
+  if(!idbOK)warn.push('Recordings cannot be stored in this browser, so uploaded sounds last only until the page closes.');
+  $('#tabbody').innerHTML=`<div class="stack">
+    ${warn.map(w=>`<div class="warnnote">${esc(w)}</div>`).join('')}
+    <div class="panel"><h3>Ideas for your next visit</h3><ul class="ideas">${ideas.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+    <div class="panel"><h3>Last 7 days</h3><div class="days">${days}</div><p class="note">Rounds played each day, and how many answers were right first time.</p>
+      ${hardest.length?`<p class="note">Hardest question types (last 14 days): ${hardest.map(([t,p])=>`${esc(TYPE_LABEL[t]||t)} ${p}%`).join(' · ')}</p>`:''}</div>
+    <div class="panel"><h3>Tricky words (last 2 weeks)</h3>${tricky.length?`<div class="chips">${tricky.map(([w,c])=>`<div class="chip"><span lang="zh-Hans" class="han">${esc(w.hz)}</span><span>${esc(w.py)}<br><small>${esc(w.en)}</small></span><span class="miss-pill">missed ${c}</span><button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button></div>`).join('')}</div>`:'<p class="muted">No misses yet.</p>'}</div>
+    <div class="panel"><h3>Words she saved to teach ${name}</h3>${saved.length?`<div class="chips">${saved.map(([s,w],i)=>`<div class="chip"><span lang="zh-Hans" class="han">${esc(w.hz)}</span><small>${dateLabel(s.day)}</small><button class="btn small sec" data-unsave="${S.saved.length-1-i}">Taught</button></div>`).join('')}</div>`:'<p class="muted">Nothing saved yet. She picks one at the end of each round.</p>'}</div>
+    <div class="panel"><h3>Garden</h3><div class="stages">${counts.map((c,i)=>`<div class="stage">${plant(i,36)}<b>${c}</b>${STAGES[i]}</div>`).join('')}</div>
+      <p class="note">${act.length} active words · ${recCount} with your own recording · Chinese computer voice: ${zhVoice?esc(zhVoice.name):'not available'}. Progress and recordings stay in this browser on this device.</p></div>
+  </div>`;
+  $('#tabbody').querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.play);if(w)say(w)});
+  $('#tabbody').querySelectorAll('[data-unsave]').forEach(b=>b.onclick=()=>{S.saved.splice(+b.dataset.unsave,1);save();renderAunty();});
+}
+let confirmDel=null,editSen=null;
+function tabWords(){
+  const rows=S.words.map(w=>{
+    const senLine=editSen===w.id
+      ?`<div class="l2 row"><input id="sen-${w.id}" value="${esc(w.sen||'')}" placeholder="用＿代表这个字" style="max-width:220px"><button class="btn small" data-savesen="${w.id}">Save</button></div>`
+      :`<div class="l2">${w.sen?esc(w.sen):'<span class="muted">No sentence</span>'} <button class="btn small sec" data-editsen="${w.id}">Edit sentence</button></div>`;
+    return `<div class="wrow ${w.active?'':'off'}">
+      <div lang="zh-Hans" class="han">${esc(w.hz)}</div>
+      <div class="meta"><div class="l1">${esc(w.py)} · ${esc(w.en)} ${esc(w.pic)}</div><div class="l2">${STAGES[w.box]} · ${w.right} right, ${w.wrong} missed · ${audioURL.has(w.id)?'your recording':'computer voice'}</div>${senLine}</div>
+      <div class="acts">
+        <button class="btn small sec" data-play="${w.id}" aria-label="Hear ${esc(w.hz)}">▶</button>
+        ${canRecord()?`<button class="btn small sec" data-rec="${w.id}">● Record</button>`:''}
+        <label class="btn small sec upl">${audioURL.has(w.id)?'Replace sound':'Add sound'}<input type="file" accept="audio/*" data-up="${w.id}" id="up-${w.id}"></label>
+        ${audioURL.has(w.id)?`<button class="btn small sec" data-rmsnd="${w.id}">Remove sound</button>`:''}
+        <button class="btn small sec" data-toggle="${w.id}">${w.active?'Pause':'Use'}</button>
+        ${confirmDel===w.id?`<button class="btn small warn" data-del="${w.id}">Delete</button><button class="btn small sec" data-nodel="1">Keep</button>`:`<button class="btn small sec" data-askdel="${w.id}">Delete…</button>`}
+      </div></div>`;}).join('');
+  $('#tabbody').innerHTML=`<div class="stack">
+    ${recPanel()}
+    <div class="panel"><h3>Add a word</h3>
+      <form class="form" id="addf">
+        <label class="f">Chinese<input id="a-hz" name="hanzi" required maxlength="8" lang="zh-Hans" autocomplete="off" placeholder="e.g. 雨…"></label>
+        <label class="f">Pinyin<input id="a-py" name="pinyin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. yǔ…"></label>
+        <label class="f">Meaning<input id="a-en" name="meaning" autocomplete="off" placeholder="e.g. rain…"></label>
+        <label class="f">Picture (emoji)<input id="a-pic" name="picture" maxlength="12" autocomplete="off" placeholder="e.g. 🌧️…"></label>
+        <label class="f">Sentence (use ＿ for the word)<input id="a-sen" name="sentence" lang="zh-Hans" autocomplete="off" placeholder="e.g. 外面下＿了。…"></label>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <p class="note">Use words from her tuition and school lists. Words without a picture still work: she hears the word and picks the characters.</p>
+    </div>
+    <div class="panel"><h3>Add many at once</h3>
+      <textarea id="bulk" name="bulk" lang="zh-Hans" autocomplete="off" spellcheck="false" placeholder="One word per line: Chinese | pinyin | meaning | emoji | sentence&#10;雨 | yǔ | rain | 🌧️ | 下＿了。&#10;大 | dà | big…"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="bulkadd">Add these</button><span class="note" id="bulkmsg" aria-live="polite"></span></div>
+    </div>
+    <div class="panel"><h3>Words (${S.words.length})</h3>
+      <p class="note">Use ● Record to record a word here, or record a voice memo on your phone and use Add sound. Paused words stay in the list but leave the game.</p>
+      <div class="words">${rows||'<p class="muted">No words yet.</p>'}</div></div></div>`;
+  $('#addf').onsubmit=e=>{e.preventDefault();const hz=$('#a-hz').value.trim();if(!hz)return;
+    const w=mkWord([hz,$('#a-py').value,$('#a-en').value,$('#a-pic').value,$('#a-sen').value]);w.sample=false;S.words.push(w);save();renderAunty();};
+  $('#bulkadd').onclick=()=>{let n=0;$('#bulk').value.split(/\n/).forEach(line=>{const p=line.split(/\s*[|\t]\s*/);if(p[0]&&p[0].trim()){const w=mkWord([p[0],p[1],p[2],p[3],p[4]]);w.sample=false;S.words.push(w);n++;}});
+    save();renderAunty();$('#bulkmsg').textContent=n?`Added ${n} words.`:'Nothing to add. Put one word per line.';};
+  const tb=$('#tabbody');
+  bindRec();
+  tb.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>openRecorder(b.dataset.rec));
+  tb.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.play);if(w&&!say(w))b.textContent='No sound';});
+  tb.querySelectorAll('[data-up]').forEach(inp=>inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;putAudio(inp.dataset.up,f);renderAunty();const w=wordById(inp.dataset.up);if(w)say(w);});
+  tb.querySelectorAll('[data-rmsnd]').forEach(b=>b.onclick=()=>{delAudio(b.dataset.rmsnd);renderAunty();});
+  tb.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{const w=wordById(b.dataset.toggle);w.active=!w.active;save();renderAunty();});
+  tb.querySelectorAll('[data-askdel]').forEach(b=>b.onclick=()=>{confirmDel=b.dataset.askdel;renderAunty();});
+  tb.querySelectorAll('[data-nodel]').forEach(b=>b.onclick=()=>{confirmDel=null;renderAunty();});
+  tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const id=b.dataset.del;S.words=S.words.filter(w=>w.id!==id);S.saved=S.saved.filter(s=>s.id!==id);delAudio(id);confirmDel=null;save();renderAunty();});
+  tb.querySelectorAll('[data-editsen]').forEach(b=>b.onclick=()=>{editSen=b.dataset.editsen;renderAunty();});
+  tb.querySelectorAll('[data-savesen]').forEach(b=>b.onclick=()=>{const id=b.dataset.savesen,w=wordById(id),inp=$('#sen-'+id);if(w&&inp)w.sen=inp.value.trim();editSen=null;save();renderAunty();});
+}
+let confirmReset=null;
+function tabSettings(){
+  const st=S.settings;
+  const sel=(id,label,val,opts)=>`<label class="f" for="${id}">${label}<select id="${id}">${opts.map(([v,l])=>`<option value="${v}" ${String(v)===String(val)?'selected':''}>${l}</option>`).join('')}</select></label>`;
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div class="panel"><h3>Game</h3><div class="set">
+      <label class="f" for="s-aunty">What she calls you<input id="s-aunty" name="nickname" value="${esc(st.aunty)}" maxlength="20" autocomplete="off"></label>
+      ${sel('s-len','Questions per round',st.len,[[6,'6'],[8,'8'],[10,'10'],[12,'12']])}
+      ${sel('s-new','New words per round',st.newPer,[[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']])}
+      ${sel('s-day','Rounds per day',st.perDay,[[1,'1'],[2,'2'],[3,'3'],[99,'No limit']])}
+      ${sel('s-py','Show pinyin',st.pinyin,[['after','After she answers'],['always','Always'],['never','Never']])}
+      ${sel('s-sfx','Happy sound on right answers',st.sfx,[[true,'On'],[false,'Off']])}
+      ${sel('s-level','Challenge',st.level,[['gentle','Gentle'],['standard','Standard'],['stretch','Stretch']])}
+    </div><p class="note" id="smsg" aria-live="polite"></p></div>
+    <div class="panel" id="voice-panel"><h3>Voice</h3>
+      <p class="note">Your recordings always play first. The computer voice is used for words without a recording, and for sentences. Which voices exist depends on the phone or tablet.</p>
+      <div class="set">
+        <label class="f" for="s-voice">Chinese voice<select id="s-voice"><option value="">Automatic (softest female voice found)</option>${zhVoices.map(v=>`<option value="${esc(v.name)}" ${st.voice===v.name?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select></label>
+        ${sel('s-rate','Speed',st.rate,[[0.45,'Very slow'],[0.6,'Slow'],[0.75,'Gentle'],[0.9,'Normal']])}
+        ${sel('s-pitch','Pitch',st.pitch,[[0.95,'Slightly lower'],[1,'Natural'],[1.1,'Slightly higher']])}
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn" id="v-test">Test the voice</button><span class="note" id="vmsg" aria-live="polite">${zhVoice?'Now using: '+esc(zhVoice.name):'No Chinese computer voice on this device. Use recordings.'}</span></div>
+    </div>
+    <div class="panel" id="preview-panel"><h3>Preview a level</h3>
+      <p class="note">Play a few questions exactly as she would see them at a stage, using the current Challenge setting. Nothing you answer here changes her garden or her summary.</p>
+      <div class="row" style="margin-top:8px"><button class="btn" data-preview="all">One of each question type</button></div>
+      <div class="row" style="margin-top:8px">${STAGES.map((n,i)=>`<button class="btn small sec" data-preview="${i}">${esc(n)}</button>`).join('')}</div>
+      <p class="note" id="pvmsg" aria-live="polite">${zhVoice||S.words.some(w=>audioURL.has(w.id))?'':'This device has no Chinese voice, so listening questions show as reading questions unless a word has your recording.'}</p>
+    </div>
+    <div class="panel" id="backup-panel"><h3>Backup</h3>
+      <p class="note">The backup includes recordings, so it can be long. To move the game to another phone: tap Copy backup, send the text to yourself (for example on WhatsApp or email), open the game on the other phone, paste it below and choose Restore.</p>
+      <div class="row"><button class="btn" id="bk-copy">Copy backup</button><span class="note" id="bkmsg" aria-live="polite"></span></div>
+      <textarea id="bk" name="backup" autocomplete="off" spellcheck="false" style="margin-top:8px" placeholder="Backup text appears here. To restore, paste a backup here and choose Restore…"></textarea>
+      <div class="row" style="margin-top:8px">${confirmReset==='restore'?`<button class="btn warn" id="bk-restore-yes">Replace everything with this backup</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="bk-restore">Restore…</button>`}</div>
+    </div>
+    <div class="panel"><h3>Start over</h3><div class="row">
+      ${confirmReset==='progress'?`<button class="btn warn" id="rp-yes">Reset all plants to seeds</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rp">Reset progress…</button>`}
+      ${confirmReset==='sample'?`<button class="btn warn" id="rs-yes">Delete my words and load samples</button><button class="btn sec" id="cancel">Cancel</button>`:`<button class="btn sec" id="rs">Load sample words…</button>`}
+    </div></div></div>`;
+  const bind=(id,key,conv)=>{$(id).onchange=()=>{S.settings[key]=conv($(id).value);tlog('setting',{k:key,val:S.settings[key]});save();$('#smsg').textContent='Saved.';}};
+  bind('#s-len','len',Number);bind('#s-new','newPer',Number);bind('#s-day','perDay',Number);bind('#s-py','pinyin',String);bind('#s-rate','rate',Number);bind('#s-pitch','pitch',Number);bind('#s-sfx','sfx',v=>v==='true');bind('#s-level','level',String);
+  $('#tabbody').querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>{const v=b.dataset.preview;
+    if(!startPreview(v==='all'?'all':Number(v)))$('#pvmsg').textContent='Add at least 3 words in Words & sounds first.';});
+  $('#s-voice').onchange=()=>{S.settings.voice=$('#s-voice').value;tlog('setting',{k:'voice',val:S.settings.voice});save();pickVoice();$('#vmsg').textContent=zhVoice?'Now using: '+zhVoice.name:'No Chinese computer voice on this device.';};
+  $('#v-test').onclick=()=>{if(!speakText('小猫在花园里。'))$('#vmsg').textContent='No Chinese computer voice on this device. Use recordings.';};
+  $('#s-aunty').oninput=()=>{S.settings.aunty=$('#s-aunty').value.trim()||'Aunty';save();};
+  let bkReady=null;
+  const copyNow=txt=>{const fail=()=>{$('#bk').select();$('#bkmsg').textContent='Backup ready. Tap Copy backup again, or select all the text below and copy it.'};
+    try{navigator.clipboard.writeText(txt).then(()=>{$('#bkmsg').textContent='Copied.'},fail)}catch(e){fail()}};
+  $('#bk-copy').onclick=async()=>{
+    if(bkReady&&$('#bk').value===bkReady){copyNow(bkReady);return;}
+    $('#bkmsg').textContent='Preparing backup…';bkReady=await backupText();$('#bk').value=bkReady;S.settings.lastBackup=today();save();copyNow(bkReady);};
+  const c=$('#cancel');if(c)c.onclick=()=>{confirmReset=null;renderAunty();};
+  const r=$('#bk-restore');if(r)r.onclick=()=>{confirmReset='restore';const keep=$('#bk').value;renderAunty();$('#bk').value=keep;};
+  const ry=$('#bk-restore-yes');if(ry)ry.onclick=()=>{try{const s=JSON.parse($('#bk').value);if(!s||s.v!==1||!Array.isArray(s.words))throw 0;
+      const audio=s.audio||{};delete s.audio;
+      s.settings=Object.assign(defaults(),s.settings||{});s.log=s.log||[];s.saved=s.saved||[];
+      [...audioURL.keys()].forEach(delAudio);S=s;
+      Object.entries(audio).forEach(([id,u])=>{const b=dataURLToBlob(u);if(b)putAudio(id,b);});
+      save();pickVoice();confirmReset=null;renderAunty();$('#bkmsg').textContent=(n=>`Restored ${S.words.length} words and ${n} recording${n===1?'':'s'}.`)(Object.keys(audio).length);}
+    catch(e){$('#bkmsg').textContent='That text is not a Zi Garden backup. Paste the whole backup and try again.';}};
+  const rp=$('#rp');if(rp)rp.onclick=()=>{confirmReset='progress';renderAunty();};
+  const rpy=$('#rp-yes');if(rpy)rpy.onclick=()=>{S.words.forEach(w=>Object.assign(w,{box:0,due:0,seen:0,right:0,wrong:0}));S.log=[];S.saved=[];save();confirmReset=null;renderAunty();};
+  const rs=$('#rs');if(rs)rs.onclick=()=>{confirmReset='sample';renderAunty();};
+  const rsy=$('#rs-yes');if(rsy)rsy.onclick=()=>{S.words.forEach(w=>delAudio(w.id));const st2=S.settings;S=fresh();S.settings=st2;save();confirmReset=null;renderAunty();};
+}
+
+/* ---------- trial log tab and report ---------- */
+let confirmLog=false;
+const pad2=n=>String(n).padStart(2,'0');
+const stamp=t=>{const d=new Date(t);return `${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;};
+const fv=v=>v===true?'1':v===false?'0':String(v).replace(/\s+/g,'_').slice(0,40);
+function evLine(x){const kv=Object.keys(x).filter(k=>!['_t','_s','_e','_v'].includes(k)&&x[k]!==undefined&&x[k]!==null).map(k=>`${k}=${fv(x[k])}`).join(' ');
+  return `${stamp(x._t)} ${x._s} ${x._e}${x._v?'@'+x._v:''} ${kv}`.trim();}
+const medOf=a=>{if(!a.length)return '-';const b=a.slice().sort((p,q)=>p-q),m=b.length>>1;return Math.round(b.length%2?b[m]:(b[m-1]+b[m])/2);};
+const countBy=(arr,f)=>{const m=new Map();arr.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m.entries()].sort((a,b)=>b[1]-a[1]);};
+function trialReport(){
+  const L=LOG,ev=n=>L.filter(x=>x._e===n),o=ev('open').slice(-1)[0]||{};
+  const R=[],kvs=obj=>Object.entries(obj).filter(([k])=>!['_t','_s','_e','_v'].includes(k)).map(([k,v])=>`${k}=${fv(v)}`).join(' ');
+  R.push('=== ZI-GARDEN TRIAL LOG v1 ===');
+  R.push(`build        ${BUILD}`);
+  R.push(`exported     ${stamp(Date.now())}`);
+  R.push(`span         ${L.length?stamp(L[0]._t)+' to '+stamp(L[L.length-1]._t):'(empty)'} | ${L.length} events | ${new Set(L.map(x=>x._s)).size} visits`);
+  R.push('--- device (latest open) ---');
+  R.push(kvs(o)||'(none)');
+  const ans=L.filter(x=>x._e==='q_ans'&&!x.pre),first=ans.filter(x=>x.first);
+  R.push('--- rounds ---');
+  R.push(`started ${ev('round_start').length} | finished ${ev('round_end').length} | stopped early ${ev('round_quit').length}`);
+  const quits=ev('round_quit').map(x=>`${x.at}/${x.planned}`);if(quits.length)R.push(`stopped at question: ${quits.join(', ')}`);
+  R.push('--- questions, first try, rounds only (preview excluded) ---');
+  R.push(`answered ${first.length} | right ${first.filter(x=>x.ok).length} (${first.length?Math.round(100*first.filter(x=>x.ok).length/first.length):0}%)`);
+  R.push('type            n  right%  median_ms  slow(>8s)');
+  const types=[...new Set(first.map(x=>x.t))];
+  types.forEach(t=>{const a=first.filter(x=>x.t===t);R.push(`${(TYPE_LABEL[t]||t).padEnd(22)} ${String(a.length).padStart(2)}  ${String(Math.round(100*a.filter(x=>x.ok).length/a.length)).padStart(4)}%  ${String(medOf(a.map(x=>x.ms))).padStart(8)}  ${a.filter(x=>x.ms>8000).length}`);});
+  const wp=countBy(ans.filter(x=>!x.ok&&x.pick),x=>`${x.hz}->${x.pick}${x.syn?'(look-alike)':''}`).slice(0,10);
+  R.push('--- wrong picks (target->tapped) ---');R.push(wp.length?wp.map(([k,n])=>`${k} x${n}`).join(' | '):'none');
+  const bw=ev('b_wrong');if(bw.length)R.push(`build wrong tiles: ${bw.length} (${countBy(bw,x=>x.real?'real-but-out-of-order':'decoy').map(([k,n])=>k+' x'+n).join(', ')})`);
+  R.push('--- friction ---');
+  const dt=countBy(ev('dead_tap'),x=>x.on+'@'+x._v).slice(0,6);
+  R.push(`no_sound ${ev('nosound').length} | audio_err ${ev('audio_err').length} | replays ${ev('replay').length} | left the app ${ev('hidden').length} | errors ${ev('error').length} | flags ${ev('flag').length}`);
+  R.push(`taps on nothing: ${ev('dead_tap').length}${dt.length?' ('+dt.map(([k,n])=>k+' x'+n).join(', ')+')':''}`);
+  const hs=ev('how_step'),he=ev('how_end'),hc=ev('how_close');
+  R.push(`how-to-play: opened ${ev('how_open').length} | finished ${he.length} | closed early ${hc.length}${hc.length?' at step '+hc.map(x=>x.i).join(','):''}`);
+  R.push(`teach-Aunty picks ${ev('teach').length} | plant taps ${ev('plant_tap').length} | flower colour changes ${ev('flower').length}`);
+  const notes=ev('note');R.push('--- notes from the grown-up ---');
+  R.push(notes.length?notes.map(x=>`${stamp(x._t)} [last question ${x.last||'?'}] ${x.text}`).join('\n'):'none');
+  const fl=ev('flag');R.push('--- flagged questions (may include accidental taps) ---');
+  R.push(fl.length?fl.map(x=>`${stamp(x._t)} ${x.hz} ${TYPE_LABEL[x.t]||x.t} stage=${x.box} after ${x.ms}ms${x.pre?' (preview)':''}`).join('\n'):'none');
+  const er=ev('error').slice(-8);if(er.length){R.push('--- errors (last 8) ---');er.forEach(x=>R.push(`${stamp(x._t)} ${x.msg} line=${x.line||'?'}`));}
+  const st=Object.entries(L.filter(x=>x._e==='setting').reduce((a,x)=>(a[x.k]=x.val,a),{}));if(st.length)R.push('settings changed: '+st.map(([k,v])=>k+'='+fv(v)).join(' | '));
+  R.push('--- latest events (up to 250) ---');
+  L.slice(-250).forEach(x=>R.push(evLine(x)));
+  R.push('=== END ===');
+  return R.join('\n');
+}
+function tabTrial(){
+  const on=S.settings.trial!==false,n=LOG.length;
+  $('#tabbody').innerHTML=`<div class="stack">
+    <div class="panel"><h3>Trial log</h3>
+      <p class="note">While you test the game it keeps a private log on this device: which questions were shown, what she tapped, how long answers took, and any errors. It holds no recordings and no names. It leaves this device only if you copy it and paste it to Claude.</p>
+      <label class="chk" for="tr-on"><input type="checkbox" id="tr-on" ${on?'checked':''}> Keep the trial log</label>
+      <p class="note">${n} events from ${new Set(LOG.map(x=>x._s)).size} visit${new Set(LOG.map(x=>x._s)).size===1?'':'s'} · build ${BUILD}</p></div>
+    <div class="panel"><h3>Add a note</h3>
+      <p class="note">Write what you saw, for example “she tapped the picture instead of the answers”. It is saved with the time and the screen she was on.</p>
+      <textarea id="tr-note" name="note" autocomplete="off" placeholder="What did you notice…" style="min-height:80px;font-family:inherit;font-size:16px"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="tr-addnote">Save note</button><span class="note" id="tr-msg" aria-live="polite"></span></div></div>
+    <div class="panel"><h3>Send the log to Claude</h3>
+      <p class="note">Tap Copy, then paste it into the chat. It starts with a summary, then your notes and flagged questions, then the latest events.</p>
+      <div class="row"><button class="btn" id="tr-copy">Copy trial log</button>
+        ${confirmLog?`<button class="btn warn" id="tr-clear-yes">Delete the whole log</button><button class="btn sec" id="tr-cancel">Keep it</button>`:`<button class="btn sec" id="tr-clear">Clear…</button>`}</div>
+      <p class="note" id="tr-cmsg" aria-live="polite"></p>
+      <textarea id="tr-text" readonly placeholder="The copied log shows here." style="margin-top:4px;min-height:140px;font-size:12px"></textarea></div></div>`;
+  const tb=$('#tabbody');
+  $('#tr-on').onchange=()=>{if(!$('#tr-on').checked)tlog('trial_off');S.settings.trial=$('#tr-on').checked;save();logFlush();renderAunty();};
+  $('#tr-addnote').onclick=()=>{const t=$('#tr-note').value.trim();if(!t){$('#tr-msg').textContent='Write something first.';return;}
+    const lq=[...LOG].reverse().find(x=>x._e==='q_show');tlog('note',{text:t.slice(0,400),last:lq?lq.hz+'/'+lq.t:'-'});logFlush();$('#tr-note').value='';$('#tr-msg').textContent='Saved.';};
+  $('#tr-copy').onclick=()=>{const txt=trialReport();$('#tr-text').value=txt;
+    const fail=()=>{$('#tr-text').select();$('#tr-cmsg').textContent='Select all the text below and copy it.'};
+    try{navigator.clipboard.writeText(txt).then(()=>{$('#tr-cmsg').textContent='Copied. Paste it into the chat.'},fail)}catch(e){fail()}};
+  const c=$('#tr-clear');if(c)c.onclick=()=>{confirmLog=true;renderAunty();};
+  const cn=$('#tr-cancel');if(cn)cn.onclick=()=>{confirmLog=false;renderAunty();};
+  const cy=$('#tr-clear-yes');if(cy)cy.onclick=()=>{LOG=[];logFlush();confirmLog=false;renderAunty();};
+}
+
+/* ---------- boot ---------- */
+window.addEventListener('popstate',()=>{
+  if(!navDepth)return;navDepth=0;
+  if(view==='play'&&sess&&!sess.preview){finish(true);return;}
+  hush();if(typeof cancelRec==='function')cancelRec();how=null;sess=null;renderGarden();show('garden');
+});
+async function start(){
+  applyFlower();renderNav();renderGarden();show('garden');
+  if(location.hash==='#grownups'||location.hash==='#how'){const h2=location.hash;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}if(h2==='#grownups')openGate();else openHow(false);}
+  await openDB();await loadAudio();
+  if(view==='garden')renderGarden();
+  tlog('open',{build:BUILD,ua:navigator.userAgent.slice(0,150),scr:`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,win:`${innerWidth}x${innerHeight}`,standalone:homeStandalone(),store:storageOK,idb:idbOK,speech:!!window.speechSynthesis,zh:zhVoice?zhVoice.name+' '+zhVoice.lang:'none',zhN:zhVoices.length,mic:canRecord(),words:S.words.length,active:active().length,rec:S.words.filter(w=>audioURL.has(w.id)).length,level:levelOf(),perDay:S.settings.perDay,len:S.settings.len,seenHow:S.settings.seenHow});
+  $('#v-play').addEventListener('click',ev=>{const f=ev.target.closest('#flag');if(!f||!sess)return;const w=cur();
+    tlog('flag',{hz:w?w.hz:'?',t:sess.t,box:w?curBox(w):'?',pre:!!sess.preview,ms:Date.now()-(sess.qT||Date.now())});f.textContent='✓';f.disabled=true;});
+  document.addEventListener('pointerdown',ev=>{if(view!=='play'&&view!=='how'&&view!=='garden')return;const el=ev.target;
+    if(!el||!el.closest||el.closest('button,a,input,select,textarea,label'))return;
+    tlog('dead_tap',{on:(typeof el.className==='string'&&el.className.split(' ')[0])||el.tagName||'?'});},true);
+}
+try{ if(window.claude&&window.claude.hot&&window.claude.hot.ready){window.claude.hot.ready(start)}else{start()} }catch(e){start()}
+})();
+</script>
+</body>
+</html>

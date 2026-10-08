@@ -2,7 +2,15 @@
 
 A Chinese word game for a Primary 1 learner. Each word is a plant that grows with spaced-repetition practice. A grown-ups corner holds the word list, uploaded recordings and a before-the-visit summary.
 
-Single self-contained page: open `index.html` in a browser, or host it as a static file (for example GitHub Pages). Progress and recordings stay in the browser on the device where she plays.
+## Pages
+
+- `index.html`: landing page with today's status and links.
+- `garden.html`: the word garden (a game that grows plants with spaced repetition) and the grown-ups corner.
+- `tingxie.html`: 听写 spelling-test practice.
+- `theme.css`: the shared colours and navigation, taken from Cellolo (`src/lib/theme.ts`: sage-green brand scale, warm grey page, khaki borders).
+- `vendor/`: Hanzi Writer for stroke order. `scripts/`: helper scripts.
+
+Static files only: open `index.html` in a browser, or host the folder (for example GitHub Pages). Progress and recordings stay in the browser on the device where she plays.
 
 ## 听写 spelling test practice (`tingxie.html`)
 
@@ -10,9 +18,9 @@ A second page, linked from a card on the garden. Add the week's word list and th
 
 ## Mobile fit and install
 
-`index.html` is a full document with a mobile viewport tag, safe-area padding, theme colours and a web manifest, so on a phone it lays out at device width and can be added to the Home Screen as a full-screen app (Chrome: ⋮ → Add to Home screen or Install app). The Android Back gesture returns from a round or the Grown-ups corner to the garden instead of leaving the game.
+All three pages are full documents with a mobile viewport tag, safe-area padding, theme colours and a web manifest, so on a phone it lays out at device width and can be added to the Home Screen as a full-screen app (Chrome: ⋮ → Add to Home screen or Install app). The Android Back gesture returns from a round or the Grown-ups corner to the garden instead of leaving the game.
 
-The Claude artifact copy needs a stripped fragment. Rebuild it with `python3 scripts/build-artifact.py <output>`.
+The Claude artifact copy needs the landing page as a fragment and the theme inlined. Build it with `python3 scripts/build-artifact.py <output-dir>`, then publish `<output-dir>/index.html` as the page and the other files through `files`.
 
 Design review: the page was checked against Vercel's Web Interface Guidelines (https://github.com/vercel-labs/web-interface-guidelines): focus states, touch targets, labels and autocomplete on inputs, reduced motion, safe areas, colour-scheme and theme-color, heading order, and `lang="zh-Hans"` on Chinese text so Android picks Simplified Chinese glyphs.
 
@@ -26,7 +34,7 @@ While `Keep the trial log` is on (Grown-ups → Trial log), the game keeps a pri
 
 ## Where data lives
 
-- Words, progress, the play log and settings: `localStorage` (key `zigarden.v1`) in the browser that plays the game.
+- Words, progress, the play log and settings (garden): `localStorage` (key `zigarden.v1`) in the browser that plays the game.
 - Uploaded recordings: IndexedDB (database `zigarden`) in the same browser.
 - Nothing is sent to a server. Each device and browser keeps its own separate copy, and a new web address starts empty.
 - Use Grown-ups → Settings → Backup to copy progress and recordings as text. Paste it into the game on another device and choose Restore to move everything there.

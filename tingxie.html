@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#EDF3EA" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F1D1A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F2F0EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10170E" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Spelling test (听写) practice for a new Primary 1 learner.">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -13,40 +13,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Serif+SC:wght@600&display=swap">
+<link rel="stylesheet" href="theme.css">
 <style>
-:root{
-  color-scheme:light;
-  --bg:#EDF3EA; --surface:#FFFFFF; --surface-2:#E1EBDD; --ink:#1C3A33; --ink-2:#4A655D; --line:#C8D7C4;
-  --leaf:#3E9B5F; --sun:#F2B632; --petal:#E5677A; --ok:#2E8C58; --ok-soft:#D7F0DF; --miss:#B85A3E; --miss-soft:#F7E1D8;
-  --accent:#1E6B58; --on-accent:#FFFFFF; --focus:#2F6FD6;
-  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
-  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-han:"KaiTi","STKaiti","Kaiti SC","Noto Serif SC","Songti SC","SimSun",serif;
-  --r:18px;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#0F1D1A; --surface:#172A26; --surface-2:#1F3631; --ink:#E3EEE8; --ink-2:#A2BCB3; --line:#2D4A43;
-    --leaf:#5CBB7B; --ok:#6CCB93; --ok-soft:#1D3F2E; --miss:#EB8D72; --miss-soft:#44261D;
-    --accent:#6FD3B4; --on-accent:#0F1D1A; --focus:#8DB8FF;
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#0F1D1A; --surface:#172A26; --surface-2:#1F3631; --ink:#E3EEE8; --ink-2:#A2BCB3; --line:#2D4A43;
-  --leaf:#5CBB7B; --ok:#6CCB93; --ok-soft:#1D3F2E; --miss:#EB8D72; --miss-soft:#44261D;
-  --accent:#6FD3B4; --on-accent:#0F1D1A; --focus:#8DB8FF;
-}
-[data-flower="rose"]{--petal:#E5677A}
-[data-flower="violet"]{--petal:#9B7BD8}
-[data-flower="sky"]{--petal:#4F9FD6}
-[data-flower="orange"]{--petal:#EF8A3C}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:rgba(30,107,88,.18)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:rgba(75,110,72,.18)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
 #app{max-width:780px;margin:0 auto;outline:none;
   padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));
@@ -66,17 +39,16 @@ p{text-wrap:pretty;margin:.4em 0}
 .note{font-size:14px;color:var(--ink-2)}
 .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .stack{display:flex;flex-direction:column;gap:16px}
-.panel{background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:0 2px 0 var(--line);scroll-margin-top:12px}
+.panel{background:var(--surface);border-radius:var(--r);padding:18px;border:1px solid var(--line);scroll-margin-top:12px}
 .warnnote{font-size:14px;background:var(--miss-soft);color:var(--ink);border-radius:10px;padding:8px 12px}
 
-.bar{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
 .brand{display:flex;align-items:baseline;gap:10px}
 .brand .zi{font-size:34px;line-height:1;color:var(--accent)}
 .brand .word{font-family:var(--f-display);font-weight:800;font-size:24px}
 .ghost{display:inline-flex;align-items:center;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--ink-2);font-size:14px;text-decoration:none}
 .ghost:hover{border-color:var(--ink-2);color:var(--ink)}
 .btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:8px 16px;font-weight:700}
-.btn.sec{background:var(--surface-2);color:var(--ink)}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 .btn.warn{background:var(--miss);color:#fff}
 .btn.small{padding:4px 12px;font-size:14px}
 .big{display:inline-block;background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;font-family:var(--f-display);font-weight:800;font-size:24px;padding:12px 32px;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 60%,#000);text-align:center}
@@ -86,7 +58,7 @@ p{text-wrap:pretty;margin:.4em 0}
 @media (pointer:coarse){.ghost,.btn,.big{min-height:44px}.btn.small{min-height:40px}}
 @media (hover:hover){.btn:hover,.big:hover:not(:disabled){filter:brightness(1.07)}}
 
-.hero{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:0 2px 0 var(--line);display:flex;flex-direction:column;gap:12px}
+.hero{background:var(--surface);border-radius:var(--r);padding:20px;border:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
 .hero h2{font-size:28px}
 .hero .big{width:100%}
 .meter{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
@@ -108,7 +80,7 @@ details.more summary{cursor:pointer;font-weight:700}
 .step{display:flex;flex-direction:column;min-height:calc(100vh - 54px);min-height:calc(100dvh - 54px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 .playtop{display:flex;align-items:center;gap:12px;margin-bottom:8px}
 .dots{display:flex;gap:6px;flex-wrap:wrap;flex:1}
-.dot{width:14px;height:14px;border-radius:50%;background:var(--surface-2);border:2px solid var(--line)}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--surface-2);border:2px solid var(--grid)}
 .dot.ok{background:var(--leaf);border-color:var(--leaf)}
 .dot.miss{background:var(--sun);border-color:var(--sun)}
 .dot.now{border-color:var(--ink)}
@@ -121,8 +93,8 @@ details.more summary{cursor:pointer;font-weight:700}
 .tzgs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .tzg{position:relative;width:clamp(76px,24vw,104px);aspect-ratio:1;background:var(--surface);border:2px solid var(--ink);border-radius:6px;display:grid;place-items:center;padding:0;color:var(--ink)}
 .tzg::before,.tzg::after{content:"";position:absolute;pointer-events:none}
-.tzg::before{left:50%;top:0;bottom:0;border-left:2px dashed var(--line)}
-.tzg::after{top:50%;left:0;right:0;border-top:2px dashed var(--line)}
+.tzg::before{left:50%;top:0;bottom:0;border-left:2px dashed var(--grid)}
+.tzg::after{top:50%;left:0;right:0;border-top:2px dashed var(--grid)}
 .tzg .c{position:relative;z-index:1;font-size:clamp(46px,14vw,68px);line-height:1}
 button.tzg{cursor:pointer}
 .tzg.bad{border-color:var(--miss);background:var(--miss-soft)}
@@ -146,8 +118,8 @@ textarea{min-height:140px}
 @media (pointer:coarse){.f input,.f select,select{min-height:44px}}
 .pad{position:relative;width:min(100%,340px);aspect-ratio:1;margin-inline:auto;background:var(--surface);border:2px solid var(--ink);border-radius:8px;touch-action:none;-webkit-user-select:none;user-select:none}
 .pad::before,.pad::after{content:"";position:absolute;pointer-events:none;z-index:0}
-.pad::before{left:50%;top:0;bottom:0;border-left:2px dashed var(--line)}
-.pad::after{top:50%;left:0;right:0;border-top:2px dashed var(--line)}
+.pad::before{left:50%;top:0;bottom:0;border-left:2px dashed var(--grid)}
+.pad::after{top:50%;left:0;right:0;border-top:2px dashed var(--grid)}
 .pad svg{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;touch-action:none}
 .pad.miss{border-color:var(--miss)}.pad.ok{border-color:var(--ok)}
 .padwrap{width:100%}
@@ -166,15 +138,16 @@ textarea{min-height:140px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body>
+<body class="hasnav">
 <a class="skip" href="#app">Skip to the page</a>
 <main id="app" data-flower="rose" tabindex="-1"><div id="view"></div></main>
+<nav class="bnav" id="bnav" aria-label="Main"></nav>
 
 <script src="vendor/hanzi-writer.min.js"></script>
 <script>
 (function(){
 'use strict';
-const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-09.2';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-09.3';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -246,12 +219,12 @@ function say(hz){hush();const u=audioURL.get(hz);
 function wStatus(w){
   const h=w.hist;if(!h.length)return 'new';
   if(!h[h.length-1].ok)return 'shaky';
-  const days=new Set(h.filter(x=>x.ok).map(x=>x.d));
+  const days=new Set(h.filter(x=>x.ok&&!x.pk).map(x=>x.d));
   return days.size>=2&&!h.slice(-3).some(x=>!x.ok)?'ready':'learning';
 }
 const STATUS_LABEL={new:'New',shaky:'Missed',learning:'Getting there',ready:'Ready'};
 function counts(L){const c={new:0,shaky:0,learning:0,ready:0};L.words.forEach(w=>c[wStatus(w)]++);return c;}
-function recordAttempt(w,k,ok,bad){w.hist.push({d:today(),k,ok,bad});if(w.hist.length>24)w.hist=w.hist.slice(-24);save();}
+function recordAttempt(w,k,ok,bad,pk){w.hist.push(pk?{d:today(),k,ok,bad,pk}:{d:today(),k,ok,bad});if(w.hist.length>24)w.hist=w.hist.slice(-24);save();}
 
 function planFor(L){
   const t=today(),dl=L.test==null?null:L.test-t,n=L.words.length;
@@ -340,15 +313,24 @@ function finishScreen(){
 /* ---------- navigation (Android Back returns home) ---------- */
 let sess=null,editState=null,realState=null,toast='',navDepth=0,confirmDel=false,confirmLog=false;
 function go(v){destroyPad();tlog('nav',{to:v});view=v;
-  document.documentElement.classList.toggle('noptr',v==='step');
+  document.documentElement.classList.toggle('noptr',v==='step');document.documentElement.classList.toggle('immersive',v==='step');
   if(v!=='home'&&!navDepth){try{history.pushState({zt:1},'');navDepth=1}catch(e){}}
   if(v==='home'&&navDepth){navDepth=0;try{history.back()}catch(e){}}
   render();window.scrollTo(0,0);}
-window.addEventListener('popstate',()=>{if(!navDepth)return;navDepth=0;hush();destroyPad();sess=null;view='home';document.documentElement.classList.remove('noptr');render();});
+window.addEventListener('popstate',()=>{if(!navDepth)return;navDepth=0;hush();destroyPad();sess=null;view='home';document.documentElement.classList.remove('noptr');document.documentElement.classList.remove('immersive');render();});
+
+/* ---------- bottom tabs ---------- */
+const NAVI={
+  home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
+  garden:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 13c0-4 3-7 8-7 0 5-3 8-8 7z"/><path d="M12 15c0-3-2-5-6-5 0 4 2 6 6 5z"/></svg>',
+  pencil:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L17 4l3 3L8 19z"/><path d="M14 7l3 3"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'};
+function renderNav(){const el=$('#bnav');if(!el)return;
+  el.innerHTML=`<ul><li><a href="index.html">${NAVI.home}<span>Home</span></a></li><li><a href="garden.html">${NAVI.garden}<span>Garden</span></a></li><li><a href="tingxie.html" aria-current="page">${NAVI.pencil}<span lang="zh-Hans" class="han" style="font-size:13px">听写</span></a></li><li><a href="garden.html#grownups">${NAVI.lock}<span>Grown-ups</span></a></li></ul>`;}
 
 /* ---------- screens ---------- */
 function header(){return `<div class="bar"><div class="brand"><span class="zi han" lang="zh-Hans">听写</span><h1 class="word">Spelling test</h1></div>
-  <div class="row" style="gap:8px"><a class="ghost" href="index.html">字 Garden</a><button class="ghost" data-act="more">Voice &amp; log</button></div></div>`;}
+  <div class="row" style="gap:8px"><button class="ghost" data-act="more">Voice &amp; log</button></div></div>`;}
 function render(){
   const out=({home:homeHTML,edit:editHTML,step:stepHTML,result:resultHTML,real:realHTML,more:moreHTML})[view]();
   $('#view').innerHTML=(view==='step'?'':header())+out;
@@ -385,7 +367,7 @@ function homeHTML(){
       ${plan.primary!=='garden'?`<button class="btn sec" data-act="garden">Add to garden${L.garden?' again':''}</button>`:''}
       ${dl!=null&&dl<=0&&!L.real&&plan.primary!=='real'?`<button class="btn sec" data-act="real">Enter real result</button>`:''}
     </div>
-    <div class="panel"><h3>The words (${n})</h3><p class="note">Tap a word to hear it. Ready means right twice on two different days, and not missed since.</p>
+    <div class="panel"><h3>The words (${n})</h3><p class="note">Tap a word to hear it. Ready means right twice on two different days without peeking, and not missed since.</p>
       <div class="words" style="margin-top:8px">${L.words.map(w=>{const s=wStatus(w);return `<button class="wchip" data-act="hear" data-hz="${esc(w.hz)}" aria-label="Hear ${esc(w.hz)}, ${STATUS_LABEL[s]}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="meta"><span>${esc(w.py||'')}</span><span class="badge ${s}">${s==='ready'?'✓ ':''}${STATUS_LABEL[s]}</span></span></button>`;}).join('')}</div>
       ${lastMock?`<p class="note" style="margin-top:10px">Last mock test (${esc(dayLong(lastMock.day))}): ${lastMock.words} of ${lastMock.total} words, ${lastMock.chars} of ${lastMock.totalChars} characters.</p>`:''}
       ${L.real?`<p class="note">Real test (${esc(dayLong(L.real.day))}): ${L.real.right} of ${L.real.total} words.</p>`:''}</div>
@@ -460,7 +442,7 @@ function startSession(mode,onlyIds){
   beginWord();go('step');
 }
 function beginWord(){
-  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();sess.ci=0;sess.slips=[];sess.verified=false;sess.trace=false;sess.noScreen=false;
+  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();sess.ci=0;sess.slips=[];sess.verified=false;sess.trace=false;sess.noScreen=false;sess.peeks=0;
   sess.step=sess.mode==='practice'&&['new','shaky'].includes(wStatus(w))?'look':'write';
   tlog(sess.step==='look'?'look_show':'write_show',{hz:w.hz,rec:audioURL.has(w.hz),voice:!!zhVoice,scr:S.settings.writeMode==='screen'?1:0});
   say(w.hz);
@@ -502,26 +484,27 @@ function stepHTML(){
     if(screenOn()){
       stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on the screen.</p>${minis(w,'prog')}<div class="padwrap"><div class="pad" id="pad"></div></div>
         <p class="note" id="padnote" aria-live="polite">${sess.mode==='mock'?'Mock test: no hints.':'Draw each stroke in order. A hint appears after two slips.'}</p>
-        <div class="row" style="justify-content:center">${small}<button class="btn sec" data-act="skip-char">Skip this character</button></div>`;
+        <div class="row" style="justify-content:center">${small}<button class="btn sec" data-act="skip-char">Skip this character</button>${sess.mode==='practice'?'<button class="btn sec" data-act="peek">Peek (3 sec)</button>':''}</div><div id="peek" class="tzgs" lang="zh-Hans" aria-live="polite"></div>`;
       dock=`<button class="big sec" data-act="paper">Use paper instead</button>`;
     }else{
       stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on paper.</p>${sound}${boxes(w,'empty')}
-        ${canHear(w.hz)?'':'<p class="note">No sound for this word on this device. Read it aloud to her.</p>'}`;
+        ${canHear(w.hz)?'':'<p class="note">No sound for this word on this device. Read it aloud to her.</p>'}
+        ${sess.mode==='practice'?'<button class="btn sec" data-act="peek">Peek (3 sec)</button>':''}<div id="peek" class="tzgs" lang="zh-Hans" aria-live="polite"></div>`;
       dock=`<button class="big" data-act="show">Show me</button>`;
     }
   }else{
     const nb=sess.bad.size;
-    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> ${sess.verified?'Checked on screen.':'Check the paper.'}</p><p class="note" style="margin:0">${sess.verified?'Tap a character to change the mark.':'Tap any character she got wrong.'}</p>${boxes(w,'mark')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> ${sess.verified?'Checked on screen.':'Check the paper.'}</p><p class="note" style="margin:0">${sess.verified?'Tap a character to change the mark.':'Tap any character she got wrong.'}${sess.peeks?` She peeked ${sess.peeks} time${sess.peeks===1?'':'s'}, so this try will not count towards Ready.`:''}</p>${boxes(w,'mark')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
     dock=`<button class="big" data-act="next">${nb?`Next · ${nb} wrong`:'All correct · Next'}</button>`;
   }
   return `<div class="step">${top}<div class="stage">${stage}</div><div class="dock">${dock}</div></div>`;
 }
 function finishWord(){
   const w=curWord(),bad=[...sess.bad].sort((a,b)=>a-b),ok=!bad.length,k=sess.mode==='mock'?'m':'p';
-  recordAttempt(w,k,ok,bad);
+  recordAttempt(w,k,ok,bad,sess.peeks);
   sess.results.push({id:w.id,ok,bad});
   if(!sess.first.has(w.id))sess.first.set(w.id,{ok,bad});
-  tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep,scr:sess.verified?1:0,slips:sess.verified?sess.slips.join(','):undefined});
+  tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep,scr:sess.verified?1:0,slips:sess.verified?sess.slips.join(','):undefined,peeks:sess.peeks||undefined});
   if(!ok&&sess.mode==='practice'&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
   sess.i++;
   if(sess.i>=sess.queue.length){endSession();}else{beginWord();render();}
@@ -603,7 +586,7 @@ function reportText(){
   R.push(`stroke data: prefetch ok ${ev('hz_prefetch').reduce((a,x)=>a+x.ok,0)} failed ${ev('hz_prefetch').reduce((a,x)=>a+x.fail,0)} | load errors ${ev('hz_err').length} | pad failures ${ev('pad_fail').length}`);
   R.push('--- friction ---');
   const dt=new Map();ev('dead_tap').forEach(x=>{const k=x.on+'@'+x._v;dt.set(k,(dt.get(k)||0)+1)});
-  R.push(`no_sound ${ev('nosound').length} | audio_err ${ev('audio_err').length} | replays ${ev('replay').length} | left the app ${ev('hidden').length} | errors ${ev('error').length} | stopped early ${ev('stop').length}`);
+  R.push(`no_sound ${ev('nosound').length} | audio_err ${ev('audio_err').length} | replays ${ev('replay').length} | left the app ${ev('hidden').length} | errors ${ev('error').length} | stopped early ${ev('stop').length} | peeks ${ev('peek').length}`);
   R.push(`taps on nothing: ${ev('dead_tap').length}${dt.size?' ('+[...dt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,n])=>k+' x'+n).join(', ')+')':''}`);
   R.push('--- notes ---');const nt=ev('note');R.push(nt.length?nt.map(x=>`${stamp(x._t)} [after ${x.last||'?'}] ${x.text}`).join('\n'):'none');
   const er=ev('error').slice(-8);if(er.length){R.push('--- errors (last 8) ---');er.forEach(x=>R.push(`${stamp(x._t)} ${x.msg} line=${x.line||'?'}`));}
@@ -675,6 +658,8 @@ function act(a,el){
     case 'pick-char':sess.trace=false;sess.ci=+el.dataset.i;render();break;
     case 'show':tlog('reveal',{hz:curWord().hz,ms:Date.now()-sess.tStep});sess.step='check';sess.tStep=Date.now();hush();render();break;
     case 'toggle':{const i=+el.dataset.i;sess.bad.has(i)?sess.bad.delete(i):sess.bad.add(i);render();break;}
+    case 'peek':{const w=curWord();sess.peeks=(sess.peeks||0)+1;tlog('peek',{hz:w.hz,n:sess.peeks});const el2=$('#peek');
+      if(el2){el2.innerHTML=boxes(w,'show');clearTimeout(sess.peekT);sess.peekT=setTimeout(()=>{const e2=$('#peek');if(e2)e2.innerHTML='';},3000);}break;}
     case 'next':finishWord();break;
     case 'redo-missed':{const ids=sess.summary.firsts.filter(x=>!x.r.ok).map(x=>x.w.id);startSession('practice',ids);break;}
     case 'vtest':{const ok=(()=>{if(!zhVoice)return false;try{hush();const ut=new SpeechSynthesisUtterance('小猫在花园里。');ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){return false}})();if(!ok)$('#vmsg').textContent='No Chinese computer voice on this device.';break;}
@@ -700,6 +685,7 @@ document.addEventListener('pointerdown',ev=>{const el=ev.target;if(!el||!el.clos
 
 /* ---------- boot ---------- */
 async function start(){
+  renderNav();
   const g=readGarden();if(g&&g.settings&&g.settings.flower)$('#app').dataset.flower=g.settings.flower;
   render();
   await loadAudio();
