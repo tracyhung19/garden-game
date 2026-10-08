@@ -144,6 +144,24 @@ label.f{display:flex;flex-direction:column;font-size:14px;color:var(--ink-2);gap
 .f input,.f select,select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg);width:100%;font-size:16px}
 textarea{min-height:140px}
 @media (pointer:coarse){.f input,.f select,select{min-height:44px}}
+.pad{position:relative;width:min(100%,340px);aspect-ratio:1;margin-inline:auto;background:var(--surface);border:2px solid var(--ink);border-radius:8px;touch-action:none;-webkit-user-select:none;user-select:none}
+.pad::before,.pad::after{content:"";position:absolute;pointer-events:none;z-index:0}
+.pad::before{left:50%;top:0;bottom:0;border-left:2px dashed var(--line)}
+.pad::after{top:50%;left:0;right:0;border-top:2px dashed var(--line)}
+.pad svg{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;touch-action:none}
+.pad.miss{border-color:var(--miss)}.pad.ok{border-color:var(--ok)}
+.padwrap{width:100%}
+.minis{display:flex;gap:8px;justify-content:center}
+.tzg.mini{width:48px}
+.tzg.mini .c{font-size:28px}
+.tzg.cur{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.tzg .slip{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:11px;color:var(--ink-2);z-index:2;line-height:1.1}
+.speak.sm{width:60px;height:60px;box-shadow:none}
+.speak.sm svg{width:30px;height:30px}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.toggle button{border:0;background:none;padding:6px 16px;font-size:14px;color:var(--ink-2)}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
+@media (pointer:coarse){.toggle button{min-height:40px}}
 .txcard{display:flex}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -152,10 +170,11 @@ textarea{min-height:140px}
 <a class="skip" href="#app">Skip to the page</a>
 <main id="app" data-flower="rose" tabindex="-1"><div id="view"></div></main>
 
+<script src="vendor/hanzi-writer.min.js"></script>
 <script>
 (function(){
 'use strict';
-const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-09.1';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-09.2';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -165,6 +184,7 @@ const dayDate=n=>new Date(n*86400000);
 const dayInput=n=>dayDate(n).toISOString().slice(0,10);
 const parseDay=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/86400000):null;};
 const dayLong=n=>dayDate(n).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+const LENIENCY=1.5,SLIP_LIMIT=2,HZ_VER='2.0.1';
 const CJK=/[㐀-䶿一-鿿]/;
 const chars=hz=>[...hz];
 const pad2=n=>String(n).padStart(2,'0');
@@ -173,7 +193,7 @@ const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5
 
 /* ---------- saved state ---------- */
 let storageOK=true;
-const fresh=()=>({v:1,cur:null,lists:[],settings:{rate:0.6,pitch:1,voice:'',trial:true}});
+const fresh=()=>({v:1,cur:null,lists:[],settings:{rate:0.6,pitch:1,voice:'',trial:true,writeMode:'paper'}});
 function load(){try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&s.v===1&&Array.isArray(s.lists)){s.settings=Object.assign(fresh().settings,s.settings||{});return s;}}}catch(e){storageOK=false}return fresh();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
 let S=load();
@@ -246,14 +266,85 @@ function planFor(L){
   return {head:dl==null?'No test date yet':`Test in ${dl} days`,sub:practiced?'Practice done today. See you tomorrow.':'A short practice each day beats one long night before.',primary:practiced?null:'practice'};
 }
 
+/* ---------- stroke data and the writing pad (Hanzi Writer) ---------- */
+const hzCache=new Map(),hzKey=c=>'zihz:'+c;
+const hasCached=c=>{if(hzCache.has(c))return true;try{return !!localStorage.getItem(hzKey(c))}catch(e){return false}};
+function loadCharData(ch,onLoad,onError){
+  if(hzCache.has(ch))return onLoad(hzCache.get(ch));
+  try{const raw=localStorage.getItem(hzKey(ch));if(raw){const d=JSON.parse(raw);hzCache.set(ch,d);return onLoad(d);}}catch(e){}
+  fetch(`https://cdn.jsdelivr.net/npm/hanzi-writer-data@${HZ_VER}/${encodeURIComponent(ch)}.json`)
+    .then(r=>{if(!r.ok)throw new Error('http '+r.status);return r.json();})
+    .then(d=>{hzCache.set(ch,d);try{localStorage.setItem(hzKey(ch),JSON.stringify(d))}catch(e){}onLoad(d);})
+    .catch(er=>{tlog('hz_err',{ch,msg:String(er&&er.message||er).slice(0,60)});onError(er);});
+}
+function prefetchChars(L){
+  if(!L||typeof fetch!=='function')return;
+  const need=[...new Set(L.words.flatMap(w=>chars(w.hz)))].filter(c=>!hasCached(c));
+  if(!need.length)return;
+  let ok=0,fail=0,i=0,fin=0;
+  const lane=()=>{if(i>=need.length){if(++fin===2)tlog('hz_prefetch',{n:need.length,ok,fail});return;}
+    loadCharData(need[i++],()=>{ok++;lane();},()=>{fail++;lane();});};
+  lane();lane();
+}
+let writer=null,padTimer=null,padToken=0;
+function destroyPad(){padToken++;clearTimeout(padTimer);try{if(writer)writer.cancelQuiz();}catch(e){}writer=null;}
+function hzColors(){const cs=getComputedStyle(document.documentElement),g=n=>cs.getPropertyValue(n).trim();return {stroke:g('--ink')||'#1C3A33',outline:g('--line')||'#C8D7C4',hi:g('--accent')||'#1E6B58'};}
+const screenOn=()=>S.settings.writeMode==='screen'&&typeof HanziWriter!=='undefined'&&!sess.noScreen;
+const padNote=m=>{const n=$('#padnote');if(n)n.textContent=m;};
+const flashPad=k=>{const el=$('#pad');if(!el)return;el.classList.add(k);setTimeout(()=>el.classList.remove(k),250);};
+function afterRender(){if(view==='step'&&sess&&(sess.step==='look'||(sess.step==='write'&&screenOn())))setupPad();}
+function setupPad(){
+  destroyPad();const tok=padToken;
+  const el=$('#pad');if(!el)return;
+  const cs=chars(curWord().hz),i=Math.min(sess.ci||0,cs.length-1),ch=cs[i];
+  if(typeof HanziWriter==='undefined'){padNote('Stroke practice is not available here.');return;}
+  const size=Math.max(160,Math.floor(el.clientWidth)),col=hzColors();
+  const base={width:size,height:size,padding:Math.round(size*0.07),strokeColor:col.stroke,outlineColor:col.outline,highlightColor:col.hi,drawingColor:col.hi,
+    drawingWidth:Math.max(10,Math.round(size/20)),strokeAnimationSpeed:1,delayBetweenStrokes:260,charDataLoader:loadCharData,
+    onLoadCharDataError:()=>{if(tok!==padToken)return;tlog('pad_fail',{ch});padNote(`Could not load the strokes for ${ch}. The first time needs a web connection.`);}};
+  try{
+    if(sess.step==='look'){
+      writer=HanziWriter.create(el,ch,Object.assign(base,{showCharacter:false,showOutline:true}));
+      if(sess.trace){padNote('Trace over the grey strokes with your finger.');runQuiz(ch,i,true,tok);}
+      else{padNote('');tlog('watch',{ch});writer.animateCharacter({onComplete:()=>{if(tok!==padToken)return;if(i<cs.length-1)padTimer=setTimeout(()=>{sess.ci=i+1;render();},800);}});}
+    }else{
+      writer=HanziWriter.create(el,ch,Object.assign(base,{showCharacter:false,showOutline:false}));
+      runQuiz(ch,i,false,tok);
+    }
+  }catch(e){tlog('pad_fail',{ch,msg:String(e&&e.message||e).slice(0,60)});padNote('Strokes could not start on this device. Use paper instead.');}
+}
+function runQuiz(ch,i,trace,tok){
+  const mock=sess.mode==='mock'&&!trace;let slips=0;const t0=Date.now();
+  writer.quiz({leniency:LENIENCY,showHintAfterMisses:trace?1:(mock?false:2),markStrokeCorrectAfterMisses:trace?3:(mock?false:5),highlightOnComplete:true,
+    onMistake:()=>{if(tok!==padToken)return;slips++;tlog('stroke_miss',{ch,n:slips});flashPad('miss');},
+    onCorrectStroke:()=>{if(tok===padToken)flashPad('ok');},
+    onComplete:sum=>tok===padToken&&charDone({ch,i,slips:(sum&&sum.totalMistakes!=null)?sum.totalMistakes:slips,ms:Date.now()-t0,trace})});
+}
+function charDone(r){
+  if(!sess||view!=='step')return;
+  const n=chars(curWord().hz).length;
+  if(r.trace){tlog('trace_done',{ch:r.ch,slips:r.slips,ms:r.ms});
+    if(r.i<n-1)padTimer=setTimeout(()=>{sess.ci=r.i+1;render();},700);else{sess.trace=false;padNote('Traced! Now cover it.');}return;}
+  sess.slips[r.i]=r.slips;tlog('char_done',{ch:r.ch,slips:r.slips,ms:r.ms,mock:sess.mode==='mock'?1:0});afterChar(r.i);
+}
+function afterChar(i){
+  const n=chars(curWord().hz).length;
+  if(i<n-1)padTimer=setTimeout(()=>{sess.ci=i+1;render();},700);else padTimer=setTimeout(finishScreen,900);
+}
+function finishScreen(){
+  if(!sess||view!=='step')return;const w=curWord(),n=chars(w.hz).length;
+  sess.bad=new Set();for(let i=0;i<n;i++){const s=sess.slips[i];if(s==null||s>SLIP_LIMIT)sess.bad.add(i);}
+  sess.verified=true;sess.step='check';tlog('reveal',{hz:w.hz,ms:Date.now()-sess.tStep,screen:1});render();
+}
+
 /* ---------- navigation (Android Back returns home) ---------- */
 let sess=null,editState=null,realState=null,toast='',navDepth=0,confirmDel=false,confirmLog=false;
-function go(v){tlog('nav',{to:v});view=v;
+function go(v){destroyPad();tlog('nav',{to:v});view=v;
   document.documentElement.classList.toggle('noptr',v==='step');
   if(v!=='home'&&!navDepth){try{history.pushState({zt:1},'');navDepth=1}catch(e){}}
   if(v==='home'&&navDepth){navDepth=0;try{history.back()}catch(e){}}
   render();window.scrollTo(0,0);}
-window.addEventListener('popstate',()=>{if(!navDepth)return;navDepth=0;hush();sess=null;view='home';document.documentElement.classList.remove('noptr');render();});
+window.addEventListener('popstate',()=>{if(!navDepth)return;navDepth=0;hush();destroyPad();sess=null;view='home';document.documentElement.classList.remove('noptr');render();});
 
 /* ---------- screens ---------- */
 function header(){return `<div class="bar"><div class="brand"><span class="zi han" lang="zh-Hans">听写</span><h1 class="word">Spelling test</h1></div>
@@ -261,6 +352,7 @@ function header(){return `<div class="bar"><div class="brand"><span class="zi ha
 function render(){
   const out=({home:homeHTML,edit:editHTML,step:stepHTML,result:resultHTML,real:realHTML,more:moreHTML})[view]();
   $('#view').innerHTML=(view==='step'?'':header())+out;
+  afterRender();
 }
 const howPanel=`<div class="panel"><details class="more"><summary>How this works</summary><ol class="how">
   <li><b>Add the list</b> your teacher gave, and the day of the test.</li>
@@ -349,6 +441,7 @@ function saveEdit(){
     S.lists.unshift(L);S.cur=L.id;
   }
   save();tlog('list_save',{n:words.length,dl:test==null?null:test-today(),isNew:!editState.id});
+  prefetchChars(listById(S.cur));
   toast=`Saved ${words.length} word${words.length===1?'':'s'}.`;editState=null;go('home');
 }
 
@@ -367,9 +460,9 @@ function startSession(mode,onlyIds){
   beginWord();go('step');
 }
 function beginWord(){
-  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();
+  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();sess.ci=0;sess.slips=[];sess.verified=false;sess.trace=false;sess.noScreen=false;
   sess.step=sess.mode==='practice'&&['new','shaky'].includes(wStatus(w))?'look':'write';
-  tlog(sess.step==='look'?'look_show':'write_show',{hz:w.hz,rec:audioURL.has(w.hz),voice:!!zhVoice});
+  tlog(sess.step==='look'?'look_show':'write_show',{hz:w.hz,rec:audioURL.has(w.hz),voice:!!zhVoice,scr:S.settings.writeMode==='screen'?1:0});
   say(w.hz);
 }
 function boxes(w,kind){
@@ -378,25 +471,47 @@ function boxes(w,kind){
     if(kind==='empty')return `<div class="tzg" aria-hidden="true"></div>`;
     if(kind==='show')return `<div class="tzg"><span class="c han">${esc(c)}</span></div>`;
     const bad=sess.bad.has(i);
-    return `<button class="tzg ${bad?'bad':''}" data-act="toggle" data-i="${i}" aria-pressed="${bad}" aria-label="${esc(c)}, ${bad?'marked wrong':'correct'}"><span class="c han">${esc(c)}</span>${bad?'<span class="x" aria-hidden="true">✗</span>':''}</button>`;
+    return `<button class="tzg ${bad?'bad':''}" data-act="toggle" data-i="${i}" aria-pressed="${bad}" aria-label="${esc(c)}, ${bad?'marked wrong':'correct'}"><span class="c han">${esc(c)}</span>${bad?'<span class="x" aria-hidden="true">✗</span>':''}${sess.verified&&sess.slips[i]!=null?`<span class="slip">${sess.slips[i]>=99?'skipped':sess.slips[i]+(sess.slips[i]===1?' slip':' slips')}</span>`:''}</button>`;
   }).join('')}</div>`;
 }
+function minis(w,mode){
+  const cs=chars(w.hz);if(mode==='pick'&&cs.length<2)return '';
+  return `<div class="minis" lang="zh-Hans">${cs.map((c,i)=>{
+    const cur=i===sess.ci,done=mode==='prog'&&sess.slips[i]!=null,inner=mode==='pick'||done?`<span class="c han">${esc(c)}</span>`:'';
+    return mode==='pick'
+      ?`<button class="tzg mini ${cur?'cur':''}" data-act="pick-char" data-i="${i}" aria-label="Character ${i+1}: ${esc(c)}" aria-pressed="${cur}">${inner}</button>`
+      :`<div class="tzg mini ${cur?'cur':''}" aria-hidden="true">${inner}</div>`;}).join('')}</div>`;
+}
+const modeToggle=()=>typeof HanziWriter==='undefined'?'':`<div class="toggle" role="group" aria-label="How she writes"><button data-act="mode" data-v="paper" aria-pressed="${S.settings.writeMode!=='screen'}">On paper</button><button data-act="mode" data-v="screen" aria-pressed="${S.settings.writeMode==='screen'}">On screen</button></div>`;
 function stepHTML(){
   const w=curWord(),n=sess.queue.length;
   const dots=sess.queue.map((_,i)=>{const r=sess.results[i];return `<span class="dot ${r?(r.ok?'ok':'miss'):''} ${i===sess.i?'now':''}"></span>`;}).join('');
   const top=`<div class="playtop"><button class="ghost" data-act="stop" aria-label="Stop and go back">✕ Stop</button><div class="dots" aria-hidden="true">${dots}</div><span class="tag">${sess.mode==='mock'?'Mock test':'Practice'} ${sess.i+1}/${n}</span></div>`;
   let stage,dock;
   const sound=`<button class="speak" data-act="replay" aria-label="Hear the word again">${speakerIcon}</button>`;
+  const small=`<button class="speak sm" data-act="replay" aria-label="Hear the word again">${speakerIcon}</button>`;
   if(sess.step==='look'){
-    stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look at the word. Say it.</p>${boxes(w,'show')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>${sound}`;
+    if(typeof HanziWriter!=='undefined'){
+      stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look. Say it. Watch how it is written.</p>${minis(w,'pick')}<div class="padwrap"><div class="pad" id="pad"></div></div><p class="note" id="padnote" aria-live="polite"></p>
+        <div class="row" style="justify-content:center"><button class="btn sec" data-act="watch">Watch again</button><button class="btn sec" data-act="trace">Trace it</button>${small}</div><div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+    }else{
+      stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look at the word. Say it.</p>${boxes(w,'show')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>${sound}`;
+    }
     dock=`<button class="big" data-act="cover">Cover it</button>`;
   }else if(sess.step==='write'){
-    stage=`<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on paper.</p>${sound}${boxes(w,'empty')}
-      ${canHear(w.hz)?'':'<p class="note">No sound for this word on this device. Read it aloud to her.</p>'}`;
-    dock=`<button class="big" data-act="show">Show me</button>`;
+    if(screenOn()){
+      stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on the screen.</p>${minis(w,'prog')}<div class="padwrap"><div class="pad" id="pad"></div></div>
+        <p class="note" id="padnote" aria-live="polite">${sess.mode==='mock'?'Mock test: no hints.':'Draw each stroke in order. A hint appears after two slips.'}</p>
+        <div class="row" style="justify-content:center">${small}<button class="btn sec" data-act="skip-char">Skip this character</button></div>`;
+      dock=`<button class="big sec" data-act="paper">Use paper instead</button>`;
+    }else{
+      stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on paper.</p>${sound}${boxes(w,'empty')}
+        ${canHear(w.hz)?'':'<p class="note">No sound for this word on this device. Read it aloud to her.</p>'}`;
+      dock=`<button class="big" data-act="show">Show me</button>`;
+    }
   }else{
     const nb=sess.bad.size;
-    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> Check the paper.</p><p class="note" style="margin:0">Tap any character she got wrong.</p>${boxes(w,'mark')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> ${sess.verified?'Checked on screen.':'Check the paper.'}</p><p class="note" style="margin:0">${sess.verified?'Tap a character to change the mark.':'Tap any character she got wrong.'}</p>${boxes(w,'mark')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
     dock=`<button class="big" data-act="next">${nb?`Next · ${nb} wrong`:'All correct · Next'}</button>`;
   }
   return `<div class="step">${top}<div class="stage">${stage}</div><div class="dock">${dock}</div></div>`;
@@ -406,7 +521,7 @@ function finishWord(){
   recordAttempt(w,k,ok,bad);
   sess.results.push({id:w.id,ok,bad});
   if(!sess.first.has(w.id))sess.first.set(w.id,{ok,bad});
-  tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep});
+  tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep,scr:sess.verified?1:0,slips:sess.verified?sess.slips.join(','):undefined});
   if(!ok&&sess.mode==='practice'&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
   sess.i++;
   if(sess.i>=sess.queue.length){endSession();}else{beginWord();render();}
@@ -480,6 +595,12 @@ function reportText(){
   const wr=ev('reveal').map(x=>x.ms);if(wr.length)R.push(`write-to-reveal time: median ${med(wr)}ms, slowest ${Math.max(...wr)}ms`);
   const miss=new Map();marks.forEach(x=>[...(x.badc||'')].forEach(c=>miss.set(c,(miss.get(c)||0)+1)));
   R.push('--- most missed characters ---');R.push([...miss.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([c,n])=>`${c} x${n}`).join(' | ')||'none');
+  const cd=ev('char_done'),sk=ev('char_skip'),tr=ev('trace_done'),sl=cd.map(x=>x.slips);
+  R.push('--- writing on screen ---');
+  R.push(cd.length||sk.length?`characters written ${cd.length} | slips median ${med(sl)} | more than ${SLIP_LIMIT} slips ${cd.filter(x=>x.slips>SLIP_LIMIT).length} | skipped ${sk.length} | median time ${med(cd.map(x=>x.ms))}ms | traces ${tr.length} | watched ${ev('watch').length} | switched to paper ${ev('use_paper').length}`:'not used');
+  const sm=new Map();cd.forEach(x=>{const e=sm.get(x.ch)||{n:0,s:0};e.n++;e.s+=x.slips;sm.set(x.ch,e);});
+  if(sm.size)R.push('slips per character: '+[...sm.entries()].sort((a,b)=>b[1].s/b[1].n-a[1].s/a[1].n).slice(0,10).map(([c,e])=>`${c} ${(e.s/e.n).toFixed(1)}`).join(' | '));
+  R.push(`stroke data: prefetch ok ${ev('hz_prefetch').reduce((a,x)=>a+x.ok,0)} failed ${ev('hz_prefetch').reduce((a,x)=>a+x.fail,0)} | load errors ${ev('hz_err').length} | pad failures ${ev('pad_fail').length}`);
   R.push('--- friction ---');
   const dt=new Map();ev('dead_tap').forEach(x=>{const k=x.on+'@'+x._v;dt.set(k,(dt.get(k)||0)+1)});
   R.push(`no_sound ${ev('nosound').length} | audio_err ${ev('audio_err').length} | replays ${ev('replay').length} | left the app ${ev('hidden').length} | errors ${ev('error').length} | stopped early ${ev('stop').length}`);
@@ -544,7 +665,14 @@ function act(a,el){
     case 'home':sess=null;go('home');break;
     case 'stop':tlog('stop',{at:sess?sess.i:null});hush();sess=null;go('home');break;
     case 'replay':tlog('replay',{hz:curWord().hz});say(curWord().hz);break;
-    case 'cover':tlog('look',{hz:curWord().hz,ms:Date.now()-sess.tStep});sess.step='write';sess.tStep=Date.now();tlog('write_show',{hz:curWord().hz,rec:audioURL.has(curWord().hz),voice:!!zhVoice});say(curWord().hz);render();break;
+    case 'cover':{const w=curWord();tlog('look',{hz:w.hz,ms:Date.now()-sess.tStep});sess.step='write';sess.ci=0;sess.slips=[];sess.verified=false;sess.tStep=Date.now();
+      tlog('write_show',{hz:w.hz,rec:audioURL.has(w.hz),voice:!!zhVoice,scr:screenOn()?1:0});say(w.hz);render();break;}
+    case 'mode':S.settings.writeMode=el.dataset.v;save();tlog('setting',{k:'writeMode',val:S.settings.writeMode});sess.ci=0;sess.slips=[];render();break;
+    case 'paper':tlog('use_paper');sess.noScreen=true;sess.ci=0;render();break;
+    case 'skip-char':{const i=sess.ci||0;sess.slips[i]=99;tlog('char_skip',{ch:chars(curWord().hz)[i]});destroyPad();afterChar(i);break;}
+    case 'watch':sess.trace=false;sess.ci=0;render();break;
+    case 'trace':sess.trace=true;sess.ci=0;render();break;
+    case 'pick-char':sess.trace=false;sess.ci=+el.dataset.i;render();break;
     case 'show':tlog('reveal',{hz:curWord().hz,ms:Date.now()-sess.tStep});sess.step='check';sess.tStep=Date.now();hush();render();break;
     case 'toggle':{const i=+el.dataset.i;sess.bad.has(i)?sess.bad.delete(i):sess.bad.add(i);render();break;}
     case 'next':finishWord();break;
@@ -575,6 +703,7 @@ async function start(){
   const g=readGarden();if(g&&g.settings&&g.settings.flower)$('#app').dataset.flower=g.settings.flower;
   render();
   await loadAudio();
+  prefetchChars(curList());
   tlog('open',{build:BUILD,ua:navigator.userAgent.slice(0,150),scr:`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,win:`${innerWidth}x${innerHeight}`,
     store:storageOK,speech:!!window.speechSynthesis,zh:zhVoice?zhVoice.name+' '+zhVoice.lang:'none',zhN:zhVoices.length,rec:audioURL.size,lists:S.lists.length,words:(curList()||{words:[]}).words.length});
   if(view==='more')render();
