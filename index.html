@@ -171,6 +171,12 @@ details.more{margin-top:4px}
 details.more summary{cursor:pointer;font-weight:700}
 details.more ul{margin:8px 0 0;padding-left:20px}
 .flagbtn{padding:4px 10px;font-size:15px;min-width:44px}
+.txcard{display:flex;align-items:center;gap:14px;margin-top:14px;background:var(--surface);border-radius:var(--r);padding:12px 16px;box-shadow:0 2px 0 var(--line);color:var(--ink);text-decoration:none;min-height:56px}
+.txcard .han{font-size:30px;color:var(--accent);line-height:1}
+.txcard .txt{display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.3}
+.txcard .txt span{font-size:14px;color:var(--ink-2)}
+.txcard .go{font-size:24px;color:var(--ink-2)}
+@media (hover:hover){.txcard:hover{outline:2px solid var(--accent)}}
 /* phone: keep the thumb area for answers, anchor the main action to the bottom */
 #v-play:not([hidden]),#v-how:not([hidden]){display:flex;flex-direction:column;min-height:calc(100vh - 54px);min-height:calc(100dvh - 54px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 #v-play .prompt{flex:1 1 auto}
@@ -328,7 +334,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}c
 let S=load();
 
 /* ---------- trial log: stays on this device, copied by hand ---------- */
-const BUILD='2026-10-08.2';
+const BUILD='2026-10-09.1';
 const LOGKEY='zigarden.log.v1',SID=Math.random().toString(36).slice(2,6);
 let LOG=[],logT=null;
 try{LOG=JSON.parse(localStorage.getItem(LOGKEY)||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
@@ -507,6 +513,14 @@ function buildQueue(){
 function dueCount(){const d=today(),act=active();
   return Math.min(S.settings.len,act.filter(w=>w.seen>0&&w.due<=d).length+Math.min(S.settings.newPer,act.filter(w=>w.seen===0).length));}
 
+function tingxieHint(){
+  try{const t=JSON.parse(localStorage.getItem('zitingxie.v1')),L=t&&t.lists&&t.lists.find(l=>l.id===t.cur);
+    if(!L)return 'Add this week’s word list';
+    if(L.test==null)return `${L.words.length} words`;
+    const dl=L.test-today();
+    return dl<0?(L.real?'Test done':'Test done · add her result'):dl===0?'Test today':dl===1?'Test tomorrow':`Test in ${dl} days`;
+  }catch(e){return 'Add this week’s word list';}
+}
 function renderGarden(){
   applyFlower();
   const left=Math.max(0,S.settings.perDay-sessionsToday());
@@ -527,6 +541,7 @@ function renderGarden(){
       <div><h2>${esc(msg)}</h2><div class="muted">Tap a plant to hear its word.</div></div>
       <button class="big" id="play" ${resting||act.length<3?'disabled':''}>Play</button>
     </div>
+    <a class="txcard" id="to-tx" href="tingxie.html"><span class="han" lang="zh-Hans">听写</span><span class="txt"><b>Spelling test practice</b><span>${esc(tingxieHint())}</span></span><span class="go" aria-hidden="true">→</span></a>
     <div class="soilbed">
       <h3>My garden · ${act.filter(w=>w.box>=4).length} of ${act.length} in flower</h3>
       <div class="garden">${act.map(w=>`<button class="pot" data-say="${w.id}" aria-label="${esc(w.hz)}, ${STAGES[w.box]}">${plant(w.box,58)}<span lang="zh-Hans" class="hz han">${esc(w.hz)}</span></button>`).join('')||'<p class="muted">No words yet.</p>'}</div>
@@ -535,6 +550,7 @@ function renderGarden(){
   $('#v-garden').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{S.settings.flower=b.dataset.flower;tlog('flower',{k:b.dataset.flower});save();renderGarden();});
   $('#v-garden').querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>{const w=S.words.find(x=>x.id===b.dataset.say);if(w){tlog('plant_tap',{hz:w.hz,box:w.box});say(w);}});
   $('#to-gate').onclick=openGate;
+  $('#to-tx').onclick=()=>tlog('tx_open');
   $('#to-how').onclick=()=>{tlog('help_tap');openHow(false);};
   const p=$('#play');if(p)p.onclick=()=>{tlog('play_tap',{first:!S.settings.seenHow});if(!S.settings.seenHow)openHow(true);else startSession();};
 }

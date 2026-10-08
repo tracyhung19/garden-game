@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDF3EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1D1A" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Spelling test (听写) practice for a new Primary 1 learner.">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Zi Garden 听写</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Serif+SC:wght@600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#EDF3EA; --surface:#FFFFFF; --surface-2:#E1EBDD; --ink:#1C3A33; --ink-2:#4A655D; --line:#C8D7C4;
+  --leaf:#3E9B5F; --sun:#F2B632; --petal:#E5677A; --ok:#2E8C58; --ok-soft:#D7F0DF; --miss:#B85A3E; --miss-soft:#F7E1D8;
+  --accent:#1E6B58; --on-accent:#FFFFFF; --focus:#2F6FD6;
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-han:"KaiTi","STKaiti","Kaiti SC","Noto Serif SC","Songti SC","SimSun",serif;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1D1A; --surface:#172A26; --surface-2:#1F3631; --ink:#E3EEE8; --ink-2:#A2BCB3; --line:#2D4A43;
+    --leaf:#5CBB7B; --ok:#6CCB93; --ok-soft:#1D3F2E; --miss:#EB8D72; --miss-soft:#44261D;
+    --accent:#6FD3B4; --on-accent:#0F1D1A; --focus:#8DB8FF;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1D1A; --surface:#172A26; --surface-2:#1F3631; --ink:#E3EEE8; --ink-2:#A2BCB3; --line:#2D4A43;
+  --leaf:#5CBB7B; --ok:#6CCB93; --ok-soft:#1D3F2E; --miss:#EB8D72; --miss-soft:#44261D;
+  --accent:#6FD3B4; --on-accent:#0F1D1A; --focus:#8DB8FF;
+}
+[data-flower="rose"]{--petal:#E5677A}
+[data-flower="violet"]{--petal:#9B7BD8}
+[data-flower="sky"]{--petal:#4F9FD6}
+[data-flower="orange"]{--petal:#EF8A3C}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:rgba(30,107,88,.18)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+#app{max-width:780px;margin:0 auto;outline:none;
+  padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px));
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+html.noptr,html.noptr body{overscroll-behavior-y:contain}
+.skip{position:absolute;left:12px;top:-60px;background:var(--accent);color:var(--on-accent);padding:8px 14px;border-radius:10px;z-index:10;font-weight:700}
+.skip:focus{top:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.han{font-family:var(--f-han);font-weight:600}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:24px}h3{font-size:18px}
+p{text-wrap:pretty;margin:.4em 0}
+.muted{color:var(--ink-2)}
+.note{font-size:14px;color:var(--ink-2)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:0 2px 0 var(--line);scroll-margin-top:12px}
+.warnnote{font-size:14px;background:var(--miss-soft);color:var(--ink);border-radius:10px;padding:8px 12px}
+
+.bar{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand .zi{font-size:34px;line-height:1;color:var(--accent)}
+.brand .word{font-family:var(--f-display);font-weight:800;font-size:24px}
+.ghost{display:inline-flex;align-items:center;background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--ink-2);font-size:14px;text-decoration:none}
+.ghost:hover{border-color:var(--ink-2);color:var(--ink)}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:8px 16px;font-weight:700}
+.btn.sec{background:var(--surface-2);color:var(--ink)}
+.btn.warn{background:var(--miss);color:#fff}
+.btn.small{padding:4px 12px;font-size:14px}
+.big{display:inline-block;background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;font-family:var(--f-display);font-weight:800;font-size:24px;padding:12px 32px;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 60%,#000);text-align:center}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.big.sec{background:var(--surface);color:var(--accent);border:2px solid var(--accent);box-shadow:none}
+.big:disabled{opacity:.45}
+@media (pointer:coarse){.ghost,.btn,.big{min-height:44px}.btn.small{min-height:40px}}
+@media (hover:hover){.btn:hover,.big:hover:not(:disabled){filter:brightness(1.07)}}
+
+.hero{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:0 2px 0 var(--line);display:flex;flex-direction:column;gap:12px}
+.hero h2{font-size:28px}
+.hero .big{width:100%}
+.meter{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
+.seg{height:100%}
+.seg.ready{background:var(--ok)}.seg.learning{background:var(--sun)}.seg.shaky{background:var(--miss)}
+.legendrow{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.words{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.wchip{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:0;border-radius:14px;padding:8px 12px;text-align:left;min-width:0}
+.wchip .han{font-size:30px;line-height:1.1}
+.wchip .meta{display:flex;flex-direction:column;min-width:0;font-size:13px;color:var(--ink-2);overflow-wrap:anywhere}
+.badge{font-size:12px;font-weight:700;border-radius:999px;padding:0 8px;width:fit-content;background:var(--surface);color:var(--ink-2)}
+.badge.ready{background:var(--ok-soft);color:var(--ok)}
+.badge.shaky{background:var(--miss-soft);color:var(--miss)}
+.badge.learning{background:var(--surface);color:var(--ink)}
+.how{margin:8px 0 0;padding-left:22px}.how li{margin-block:4px}
+details.more summary{cursor:pointer;font-weight:700}
+
+/* practice and test */
+.step{display:flex;flex-direction:column;min-height:calc(100vh - 54px);min-height:calc(100dvh - 54px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+.playtop{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--surface-2);border:2px solid var(--line)}
+.dot.ok{background:var(--leaf);border-color:var(--leaf)}
+.dot.miss{background:var(--sun);border-color:var(--sun)}
+.dot.now{border-color:var(--ink)}
+.tag{font-size:13px;background:var(--surface-2);border-radius:8px;padding:2px 10px;color:var(--ink-2)}
+.stage{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.cue{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,7vw,32px);line-height:1.2;text-wrap:balance;margin:0}
+.cue .em{font-size:1.2em}
+.dock{display:flex;flex-direction:column;gap:10px;padding-top:12px}
+.dock .big{width:100%}
+.tzgs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.tzg{position:relative;width:clamp(76px,24vw,104px);aspect-ratio:1;background:var(--surface);border:2px solid var(--ink);border-radius:6px;display:grid;place-items:center;padding:0;color:var(--ink)}
+.tzg::before,.tzg::after{content:"";position:absolute;pointer-events:none}
+.tzg::before{left:50%;top:0;bottom:0;border-left:2px dashed var(--line)}
+.tzg::after{top:50%;left:0;right:0;border-top:2px dashed var(--line)}
+.tzg .c{position:relative;z-index:1;font-size:clamp(46px,14vw,68px);line-height:1}
+button.tzg{cursor:pointer}
+.tzg.bad{border-color:var(--miss);background:var(--miss-soft)}
+.tzg.bad .c{opacity:.55}
+.tzg .x{position:absolute;right:4px;top:0;z-index:2;color:var(--miss);font-weight:800;font-size:22px}
+.py{font-family:var(--f-display);font-size:24px;color:var(--ink-2);min-height:1.3em}
+.speak{width:112px;height:112px;border-radius:50%;border:0;background:var(--petal);color:#fff;box-shadow:0 5px 0 color-mix(in srgb,var(--petal) 60%,#000);display:grid;place-items:center}
+.speak:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--petal) 60%,#000)}
+.speak svg{width:56px;height:56px}
+.score{font-family:var(--f-display);font-weight:800;font-size:48px;line-height:1.1}
+.rlist{display:flex;flex-direction:column;gap:8px}
+.rrow{display:flex;gap:12px;align-items:center;background:var(--surface-2);border-radius:12px;padding:8px 12px}
+.rrow .han{font-size:30px;min-width:3.2em}
+.rrow .mark{margin-left:auto;font-weight:800}
+.rrow.ok .mark{color:var(--ok)}.rrow.no .mark{color:var(--miss)}
+.chk{display:flex;gap:8px;align-items:center}
+.chk input{width:20px;height:20px}
+label.f{display:flex;flex-direction:column;font-size:14px;color:var(--ink-2);gap:2px}
+.f input,.f select,select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg);width:100%;font-size:16px}
+textarea{min-height:140px}
+@media (pointer:coarse){.f input,.f select,select{min-height:44px}}
+.txcard{display:flex}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#app">Skip to the page</a>
+<main id="app" data-flower="rose" tabindex="-1"><div id="view"></div></main>
+
+<script>
+(function(){
+'use strict';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-09.1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const today=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000);};
+const dayDate=n=>new Date(n*86400000);
+const dayInput=n=>dayDate(n).toISOString().slice(0,10);
+const parseDay=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/86400000):null;};
+const dayLong=n=>dayDate(n).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+const CJK=/[㐀-䶿一-鿿]/;
+const chars=hz=>[...hz];
+const pad2=n=>String(n).padStart(2,'0');
+const stamp=t=>{const d=new Date(t);return `${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;};
+const speakerIcon=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+
+/* ---------- saved state ---------- */
+let storageOK=true;
+const fresh=()=>({v:1,cur:null,lists:[],settings:{rate:0.6,pitch:1,voice:'',trial:true}});
+function load(){try{const raw=localStorage.getItem(KEY);if(raw){const s=JSON.parse(raw);if(s&&s.v===1&&Array.isArray(s.lists)){s.settings=Object.assign(fresh().settings,s.settings||{});return s;}}}catch(e){storageOK=false}return fresh();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
+let S=load();
+const listById=id=>S.lists.find(l=>l.id===id)||null;
+const curList=()=>listById(S.cur);
+const wordOf=(L,id)=>L.words.find(w=>w.id===id)||null;
+function readGarden(){try{const s=JSON.parse(localStorage.getItem(GKEY));return s&&Array.isArray(s.words)?s:null}catch(e){return null}}
+
+/* ---------- trial log (this device only) ---------- */
+const SID=Math.random().toString(36).slice(2,6);
+let LOG=[],logT=null,view='home';
+try{LOG=JSON.parse(localStorage.getItem(LOGKEY)||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
+const logFlush=()=>{try{localStorage.setItem(LOGKEY,JSON.stringify(LOG))}catch(e){}};
+function tlog(e,d){
+  if(S.settings.trial===false)return;
+  LOG.push(Object.assign({},d||{},{_t:Date.now(),_s:SID,_e:e,_v:view}));
+  if(LOG.length>2000)LOG=LOG.slice(-2000);
+  clearTimeout(logT);logT=setTimeout(logFlush,500);
+}
+window.addEventListener('pagehide',logFlush);
+document.addEventListener('visibilitychange',()=>{tlog(document.hidden?'hidden':'visible');if(document.hidden)logFlush();});
+window.addEventListener('error',ev=>tlog('error',{msg:String(ev.message||'').slice(0,120),line:ev.lineno}));
+window.addEventListener('unhandledrejection',ev=>tlog('error',{msg:String(ev.reason&&ev.reason.message||ev.reason||'').slice(0,120)}));
+
+/* ---------- sound: recordings made in the garden, else the computer voice ---------- */
+const audioURL=new Map();let db=null,zhVoice=null,zhVoices=[],curAudio=null;
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open('zigarden',1);
+  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('audio'))r.result.createObjectStore('audio');};
+  r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>res();}catch(e){res()}});}
+async function loadAudio(){await openDB();const g=readGarden();if(!db||!g)return;
+  const idHz=new Map(g.words.map(w=>[w.id,w.hz]));
+  await new Promise(res=>{try{const req=db.transaction('audio','readonly').objectStore('audio').openCursor();
+    req.onsuccess=()=>{const c=req.result;if(c){const hz=idHz.get(c.key);if(hz&&!audioURL.has(hz))audioURL.set(hz,URL.createObjectURL(c.value));c.continue();}else res();};
+    req.onerror=()=>res();}catch(e){res()}});}
+const FEMALE=/xiaoxiao|xiaoyi|xiaohan|xiaomo|xiaoxuan|xiaorui|xiaoshuang|xiaoyan|tingting|ting-ting|huihui|yaoyao|lili|yu-shu|yushu|meijia|mei-jia|google\s*普通话|female|女/i;
+const MALE=/kangkang|yunxi|yunyang|yunjian|yunxia|yunze|li-mu|limu|\bmale\b|男/i;
+const voiceScore=v=>{let n=0;if(/^zh[-_]CN/i.test(v.lang)||/^cmn/i.test(v.lang))n+=2;if(MALE.test(v.name))n-=4;if(FEMALE.test(v.name))n+=3;if(/natural|online|premium|enhanced/i.test(v.name))n+=1;return n;};
+function pickVoice(){try{const vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+  zhVoices=vs.filter(v=>(/^zh/i.test(v.lang)||/^cmn/i.test(v.lang))&&!/HK|yue|MO/i.test(v.lang));
+  zhVoice=zhVoices.find(v=>v.name===S.settings.voice)||zhVoices.slice().sort((a,b)=>voiceScore(b)-voiceScore(a))[0]||null;}catch(e){zhVoice=null;zhVoices=[]}}
+try{pickVoice();if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>{pickVoice();if(view==='more')render();};}catch(e){}
+const canHear=hz=>audioURL.has(hz)||!!zhVoice;
+function hush(){try{if(curAudio){curAudio.pause();curAudio=null}if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}}
+function say(hz){hush();const u=audioURL.get(hz);
+  if(u){curAudio=new Audio(u);curAudio.play().catch(er=>tlog('audio_err',{hz,msg:String(er&&er.name||er).slice(0,40)}));return true;}
+  if(zhVoice){try{const ut=new SpeechSynthesisUtterance(hz);ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){}}
+  tlog('nosound',{hz});return false;}
+
+/* ---------- how well each word is known ---------- */
+function wStatus(w){
+  const h=w.hist;if(!h.length)return 'new';
+  if(!h[h.length-1].ok)return 'shaky';
+  const days=new Set(h.filter(x=>x.ok).map(x=>x.d));
+  return days.size>=2&&!h.slice(-3).some(x=>!x.ok)?'ready':'learning';
+}
+const STATUS_LABEL={new:'New',shaky:'Missed',learning:'Getting there',ready:'Ready'};
+function counts(L){const c={new:0,shaky:0,learning:0,ready:0};L.words.forEach(w=>c[wStatus(w)]++);return c;}
+function recordAttempt(w,k,ok,bad){w.hist.push({d:today(),k,ok,bad});if(w.hist.length>24)w.hist=w.hist.slice(-24);save();}
+
+function planFor(L){
+  const t=today(),dl=L.test==null?null:L.test-t,n=L.words.length;
+  const did=k=>L.words.some(w=>w.hist.some(h=>h.d===t&&h.k===k));
+  const practiced=did('p'),mocked=did('m');
+  if(dl!=null&&dl<0)return L.real
+    ?{head:'The test is done',sub:`Real result: ${L.real.right} of ${n} words. Add the words to the garden so they stay learned.`,primary:L.garden?null:'garden'}
+    :{head:'The test day has passed',sub:'How did it go? Enter the result, then add the words to the garden.',primary:'real'};
+  if(dl===0)return {head:'Test today',sub:'A short practice this morning, then good luck.',primary:'practice'};
+  if(dl===1)return {head:'Test tomorrow',sub:mocked?'Mock test done today. Practise the words that were missed.':'Do a mock test today, then practise any missed words.',primary:mocked?'practice':'mock'};
+  if(dl===2||dl===3)return {head:`Test in ${dl} days`,sub:practiced?'Practice done today. A mock test shows what still needs work.':'About 10 minutes of practice today.',primary:practiced?'mock':'practice'};
+  return {head:dl==null?'No test date yet':`Test in ${dl} days`,sub:practiced?'Practice done today. See you tomorrow.':'A short practice each day beats one long night before.',primary:practiced?null:'practice'};
+}
+
+/* ---------- navigation (Android Back returns home) ---------- */
+let sess=null,editState=null,realState=null,toast='',navDepth=0,confirmDel=false,confirmLog=false;
+function go(v){tlog('nav',{to:v});view=v;
+  document.documentElement.classList.toggle('noptr',v==='step');
+  if(v!=='home'&&!navDepth){try{history.pushState({zt:1},'');navDepth=1}catch(e){}}
+  if(v==='home'&&navDepth){navDepth=0;try{history.back()}catch(e){}}
+  render();window.scrollTo(0,0);}
+window.addEventListener('popstate',()=>{if(!navDepth)return;navDepth=0;hush();sess=null;view='home';document.documentElement.classList.remove('noptr');render();});
+
+/* ---------- screens ---------- */
+function header(){return `<div class="bar"><div class="brand"><span class="zi han" lang="zh-Hans">听写</span><h1 class="word">Spelling test</h1></div>
+  <div class="row" style="gap:8px"><a class="ghost" href="index.html">字 Garden</a><button class="ghost" data-act="more">Voice &amp; log</button></div></div>`;}
+function render(){
+  const out=({home:homeHTML,edit:editHTML,step:stepHTML,result:resultHTML,real:realHTML,more:moreHTML})[view]();
+  $('#view').innerHTML=(view==='step'?'':header())+out;
+}
+const howPanel=`<div class="panel"><details class="more"><summary>How this works</summary><ol class="how">
+  <li><b>Add the list</b> your teacher gave, and the day of the test.</li>
+  <li><b>Practise a little each day.</b> Look at the word, cover it, then she writes it on paper and you check it.</li>
+  <li><b>Do a mock test</b> the day before. It marks each character, so you see exactly what to fix.</li>
+  <li><b>After the test,</b> enter her real result and add the words to the garden so they stay learned.</li></ol></details></div>`;
+
+function homeHTML(){
+  const L=curList();
+  const flash=toast?`<div class="warnnote" role="status" style="background:var(--ok-soft)">${esc(toast)}</div>`:'';toast='';
+  if(!L)return `<div class="stack">${flash}<div class="panel"><h2>Add this week’s list</h2>
+    <p>Type or paste the words your teacher gave, and the day of the test. The page plans the week and keeps score.</p>
+    <div class="row" style="margin-top:12px"><button class="big" data-act="add">Add the list</button></div></div>${howPanel}</div>`;
+  const plan=planFor(L),c=counts(L),n=L.words.length;
+  const dl=L.test==null?null:L.test-today();
+  const lastMock=L.mocks&&L.mocks.length?L.mocks[L.mocks.length-1]:null;
+  const btn={practice:['practice','Practise now'],mock:['mock','Mock test'],real:['real','Enter the real result'],garden:['garden','Add to the garden']}[plan.primary];
+  const others=S.lists.filter(x=>x.id!==L.id);
+  return `<div class="stack">${flash}
+    <section class="hero" aria-label="This week">
+      <div><div class="note">${esc(L.name)}${L.test!=null?' · test '+esc(dayLong(L.test)):''}</div><h2>${esc(plan.head)}</h2><p class="muted" style="margin:4px 0 0">${esc(plan.sub)}</p></div>
+      <div role="img" aria-label="${c.ready} of ${n} words ready"><div class="meter">${['ready','learning','shaky'].map(k=>c[k]?`<span class="seg ${k}" style="flex:${c[k]}"></span>`:'').join('')}</div></div>
+      <div class="legendrow"><span><b>${c.ready}</b> of ${n} ready</span><span>${c.learning} getting there</span><span>${c.shaky} missed</span><span>${c.new} new</span></div>
+      ${btn?`<button class="big" data-act="${btn[0]}">${btn[1]}</button>`:''}
+    </section>
+    <div class="row">
+      ${plan.primary!=='practice'?`<button class="btn sec" data-act="practice">Practise</button>`:''}
+      ${plan.primary!=='mock'?`<button class="btn sec" data-act="mock">Mock test</button>`:''}
+      <button class="btn sec" data-act="edit">Edit list</button>
+      ${plan.primary!=='garden'?`<button class="btn sec" data-act="garden">Add to garden${L.garden?' again':''}</button>`:''}
+      ${dl!=null&&dl<=0&&!L.real&&plan.primary!=='real'?`<button class="btn sec" data-act="real">Enter real result</button>`:''}
+    </div>
+    <div class="panel"><h3>The words (${n})</h3><p class="note">Tap a word to hear it. Ready means right twice on two different days, and not missed since.</p>
+      <div class="words" style="margin-top:8px">${L.words.map(w=>{const s=wStatus(w);return `<button class="wchip" data-act="hear" data-hz="${esc(w.hz)}" aria-label="Hear ${esc(w.hz)}, ${STATUS_LABEL[s]}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="meta"><span>${esc(w.py||'')}</span><span class="badge ${s}">${s==='ready'?'✓ ':''}${STATUS_LABEL[s]}</span></span></button>`;}).join('')}</div>
+      ${lastMock?`<p class="note" style="margin-top:10px">Last mock test (${esc(dayLong(lastMock.day))}): ${lastMock.words} of ${lastMock.total} words, ${lastMock.chars} of ${lastMock.totalChars} characters.</p>`:''}
+      ${L.real?`<p class="note">Real test (${esc(dayLong(L.real.day))}): ${L.real.right} of ${L.real.total} words.</p>`:''}</div>
+    ${howPanel}
+    <div class="panel"><div class="row"><button class="btn" data-act="add">Add a new list</button></div>
+      ${others.length?`<h3 style="margin-top:12px">Earlier lists</h3><div class="row" style="margin-top:6px">${others.map(x=>`<button class="btn sec small" data-act="open-list" data-id="${x.id}">${esc(x.name)}</button>`).join('')}</div>`:''}</div>
+  </div>`;
+}
+
+function editHTML(){
+  const e=editState;
+  return `<div class="stack"><div class="panel"><h2>${e.id?'Edit the list':'Add this week’s list'}</h2>
+    <div class="stack" style="margin-top:12px">
+      <label class="f" for="e-name">List name (optional)<input id="e-name" name="listname" autocomplete="off" value="${esc(e.name)}" placeholder="e.g. Lesson 3…"></label>
+      <label class="f" for="e-date">Test day<input id="e-date" name="testday" type="date" value="${esc(e.date)}"></label>
+      <label class="f" for="e-words">Words, one per line (pinyin is optional)<textarea id="e-words" name="words" lang="zh-Hans" autocomplete="off" spellcheck="false" placeholder="猫 māo&#10;苹果 píngguǒ&#10;月亮…">${esc(e.text)}</textarea></label>
+      <p class="note">You can also separate words with spaces or commas. Add pinyin after a word if the teacher gave it. Up to 40 words.</p>
+      ${e.msg?`<div class="warnnote" role="alert">${esc(e.msg)}</div>`:''}
+      <div class="row"><button class="btn" data-act="save">Save list</button><button class="btn sec" data-act="cancel">Cancel</button>
+        ${e.id?(confirmDel?`<button class="btn warn" data-act="del-yes">Delete this list</button><button class="btn sec" data-act="del-no">Keep it</button>`:`<button class="btn sec" data-act="del-ask">Delete…</button>`):''}</div>
+    </div></div></div>`;
+}
+function parseWords(text){
+  const out=[],seen=new Set();
+  const push=c=>{if(c&&!seen.has(c.hz)){seen.add(c.hz);out.push(c);}};
+  text.split(/\n+/).forEach(line=>{
+    let cur=null;
+    line.split(/[\s,，、;；|]+/).filter(Boolean).forEach(t=>{
+      const hz=[...t].filter(ch=>CJK.test(ch)).join('');
+      if(hz){push(cur);cur={hz,py:''};}
+      else if(cur){cur.py=(cur.py?cur.py+' ':'')+t;}
+    });
+    push(cur);
+  });
+  return out.slice(0,40);
+}
+function captureEdit(){const g=id=>{const el=$(id);return el?el.value:''};editState.name=g('#e-name');editState.date=g('#e-date');editState.text=g('#e-words');}
+function openEdit(L){
+  editState=L?{id:L.id,name:L.name,date:L.test!=null?dayInput(L.test):'',text:L.words.map(w=>w.py?`${w.hz} ${w.py}`:w.hz).join('\n'),msg:''}
+             :{id:null,name:'',date:'',text:'',msg:''};
+  confirmDel=false;go('edit');
+}
+function saveEdit(){
+  captureEdit();const words=parseWords(editState.text);
+  if(!words.length){editState.msg='Add at least one Chinese word, for example 猫.';render();return;}
+  const test=parseDay(editState.date);
+  if(editState.id){const L=listById(editState.id),old=new Map(L.words.map(w=>[w.hz,w]));
+    L.words=words.map(p=>{const o=old.get(p.hz);return o?Object.assign(o,{py:p.py||o.py}):{id:uid(),hz:p.hz,py:p.py,hist:[]};});
+    L.name=editState.name.trim()||L.name;L.test=test;
+  }else{
+    const L={id:uid(),name:editState.name.trim()||`List of ${dayLong(today())}`,created:today(),test,mocks:[],real:null,garden:false,
+      words:words.map(p=>({id:uid(),hz:p.hz,py:p.py,hist:[]}))};
+    S.lists.unshift(L);S.cur=L.id;
+  }
+  save();tlog('list_save',{n:words.length,dl:test==null?null:test-today(),isNew:!editState.id});
+  toast=`Saved ${words.length} word${words.length===1?'':'s'}.`;editState=null;go('home');
+}
+
+/* practice and mock test */
+function curWord(){const L=listById(sess.listId);return wordOf(L,sess.queue[sess.i]);}
+function buildQueue(L,mode){
+  if(mode==='mock')return shuffle(L.words).map(w=>w.id);
+  const order={shaky:0,new:1,learning:2,ready:3};
+  return shuffle(L.words).sort((a,b)=>order[wStatus(a)]-order[wStatus(b)]).slice(0,12).map(w=>w.id);
+}
+function startSession(mode,onlyIds){
+  const L=curList();if(!L||!L.words.length)return;
+  const ids=onlyIds&&onlyIds.length?onlyIds:buildQueue(L,mode);
+  sess={mode,listId:L.id,queue:ids,i:0,step:'write',bad:new Set(),results:[],first:new Map(),retried:new Set(),t0:Date.now(),tStep:Date.now(),done:false};
+  tlog('session_start',{mode,n:ids.length,dl:L.test==null?null:L.test-today()});
+  beginWord();go('step');
+}
+function beginWord(){
+  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();
+  sess.step=sess.mode==='practice'&&['new','shaky'].includes(wStatus(w))?'look':'write';
+  tlog(sess.step==='look'?'look_show':'write_show',{hz:w.hz,rec:audioURL.has(w.hz),voice:!!zhVoice});
+  say(w.hz);
+}
+function boxes(w,kind){
+  const cs=chars(w.hz);
+  return `<div class="tzgs" lang="zh-Hans">${cs.map((c,i)=>{
+    if(kind==='empty')return `<div class="tzg" aria-hidden="true"></div>`;
+    if(kind==='show')return `<div class="tzg"><span class="c han">${esc(c)}</span></div>`;
+    const bad=sess.bad.has(i);
+    return `<button class="tzg ${bad?'bad':''}" data-act="toggle" data-i="${i}" aria-pressed="${bad}" aria-label="${esc(c)}, ${bad?'marked wrong':'correct'}"><span class="c han">${esc(c)}</span>${bad?'<span class="x" aria-hidden="true">✗</span>':''}</button>`;
+  }).join('')}</div>`;
+}
+function stepHTML(){
+  const w=curWord(),n=sess.queue.length;
+  const dots=sess.queue.map((_,i)=>{const r=sess.results[i];return `<span class="dot ${r?(r.ok?'ok':'miss'):''} ${i===sess.i?'now':''}"></span>`;}).join('');
+  const top=`<div class="playtop"><button class="ghost" data-act="stop" aria-label="Stop and go back">✕ Stop</button><div class="dots" aria-hidden="true">${dots}</div><span class="tag">${sess.mode==='mock'?'Mock test':'Practice'} ${sess.i+1}/${n}</span></div>`;
+  let stage,dock;
+  const sound=`<button class="speak" data-act="replay" aria-label="Hear the word again">${speakerIcon}</button>`;
+  if(sess.step==='look'){
+    stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look at the word. Say it.</p>${boxes(w,'show')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>${sound}`;
+    dock=`<button class="big" data-act="cover">Cover it</button>`;
+  }else if(sess.step==='write'){
+    stage=`<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on paper.</p>${sound}${boxes(w,'empty')}
+      ${canHear(w.hz)?'':'<p class="note">No sound for this word on this device. Read it aloud to her.</p>'}`;
+    dock=`<button class="big" data-act="show">Show me</button>`;
+  }else{
+    const nb=sess.bad.size;
+    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> Check the paper.</p><p class="note" style="margin:0">Tap any character she got wrong.</p>${boxes(w,'mark')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+    dock=`<button class="big" data-act="next">${nb?`Next · ${nb} wrong`:'All correct · Next'}</button>`;
+  }
+  return `<div class="step">${top}<div class="stage">${stage}</div><div class="dock">${dock}</div></div>`;
+}
+function finishWord(){
+  const w=curWord(),bad=[...sess.bad].sort((a,b)=>a-b),ok=!bad.length,k=sess.mode==='mock'?'m':'p';
+  recordAttempt(w,k,ok,bad);
+  sess.results.push({id:w.id,ok,bad});
+  if(!sess.first.has(w.id))sess.first.set(w.id,{ok,bad});
+  tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep});
+  if(!ok&&sess.mode==='practice'&&!sess.retried.has(w.id)){sess.retried.add(w.id);sess.queue.push(w.id);}
+  sess.i++;
+  if(sess.i>=sess.queue.length){endSession();}else{beginWord();render();}
+}
+function endSession(){
+  const L=listById(sess.listId);sess.done=true;
+  const firsts=[...sess.first.entries()].map(([id,r])=>({w:wordOf(L,id),r}));
+  sess.summary={words:firsts.filter(x=>x.r.ok).length,total:firsts.length,
+    chars:firsts.reduce((a,x)=>a+chars(x.w.hz).length-x.r.bad.length,0),totalChars:firsts.reduce((a,x)=>a+chars(x.w.hz).length,0),firsts};
+  if(sess.mode==='mock'){L.mocks=L.mocks||[];L.mocks.push({day:today(),words:sess.summary.words,total:sess.summary.total,chars:sess.summary.chars,totalChars:sess.summary.totalChars});save();}
+  tlog('session_end',{mode:sess.mode,words:sess.summary.words,total:sess.summary.total,chars:sess.summary.chars,totalChars:sess.summary.totalChars,ms:Date.now()-sess.t0});
+  go('result');
+}
+function resultHTML(){
+  const s=sess.summary,missed=s.firsts.filter(x=>!x.r.ok);
+  const headline=sess.mode==='mock'?'Mock test result':'Practice done';
+  return `<div class="stack"><div class="panel" style="text-align:center"><h2>${headline}</h2>
+    <div class="score" style="margin-top:8px">${s.words} of ${s.total} words</div>
+    <p class="muted">${s.chars} of ${s.totalChars} characters right${sess.mode==='practice'?' first time':''}.</p>
+    <p>${missed.length?`${missed.length} to practise again.`:'Every word was right. Well done!'}</p></div>
+    <div class="panel"><h3>Word by word</h3><div class="rlist" style="margin-top:8px">${s.firsts.map(({w,r})=>`<div class="rrow ${r.ok?'ok':'no'}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="note">${esc(w.py||'')}${r.bad.length?` · missed ${esc(r.bad.map(i=>chars(w.hz)[i]).join(' '))}`:''}</span><span class="mark">${r.ok?'✓':'✗'}</span></div>`).join('')}</div></div>
+    <div class="row">${missed.length?`<button class="big" data-act="redo-missed">Practise the missed words</button>`:''}<button class="big sec" data-act="home">Back to this week</button></div></div>`;
+}
+
+/* real test result */
+function openReal(){const L=curList();realState={wrong:new Set()};go('real');}
+function realHTML(){
+  const L=curList();
+  return `<div class="stack"><div class="panel"><h2>How did the real test go?</h2><p class="muted">Tap the words she got wrong. This helps plan the next practice, and shows how well the mock tests predicted it.</p></div>
+    <div class="panel"><div class="words">${L.words.map(w=>{const bad=realState.wrong.has(w.id);return `<button class="wchip" data-act="toggle-real" data-id="${w.id}" aria-pressed="${bad}" style="${bad?'background:var(--miss-soft)':''}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="meta"><span>${esc(w.py||'')}</span><span class="badge ${bad?'shaky':'ready'}">${bad?'✗ Wrong':'✓ Right'}</span></span></button>`;}).join('')}</div></div>
+    <div class="row"><button class="btn" data-act="save-real">Save result (${L.words.length-realState.wrong.size} of ${L.words.length} right)</button><button class="btn sec" data-act="cancel">Cancel</button></div></div>`;
+}
+
+/* link to the garden: words she knows start higher */
+function addToGarden(L){
+  let g=readGarden();if(!g)g={v:1,words:[],log:[],saved:[],settings:{}};
+  const have=new Set(g.words.map(w=>w.hz));let added=0,skipped=0;
+  L.words.forEach(w=>{
+    if(have.has(w.hz)){skipped++;return;}
+    const ready=wStatus(w)==='ready',t=today();
+    g.words.push({id:uid(),hz:w.hz,py:w.py||'',en:w.py||'',pic:'',sen:'',active:true,box:ready?2:0,due:ready?t+2:0,seen:ready?1:0,right:ready?1:0,wrong:0,sample:false});
+    added++;
+  });
+  try{localStorage.setItem(GKEY,JSON.stringify(g))}catch(e){return {err:true};}
+  L.garden=true;save();tlog('garden_add',{added,skipped});return {added,skipped};
+}
+
+/* voice and log */
+function reportText(){
+  const L=LOG,ev=n=>L.filter(x=>x._e===n),o=ev('open').slice(-1)[0]||{};
+  const fv=v=>v===true?'1':v===false?'0':String(v).replace(/\s+/g,'_').slice(0,40);
+  const kvs=obj=>Object.entries(obj).filter(([k])=>!['_t','_s','_e','_v'].includes(k)).map(([k,v])=>`${k}=${fv(v)}`).join(' ');
+  const med=a=>{if(!a.length)return '-';const b=a.slice().sort((p,q)=>p-q),m=b.length>>1;return Math.round(b.length%2?b[m]:(b[m-1]+b[m])/2);};
+  const R=[];
+  R.push('=== ZI-TINGXIE TRIAL LOG v1 ===');
+  R.push(`build        ${BUILD}`);R.push(`exported     ${stamp(Date.now())}`);
+  R.push(`span         ${L.length?stamp(L[0]._t)+' to '+stamp(L[L.length-1]._t):'(empty)'} | ${L.length} events | ${new Set(L.map(x=>x._s)).size} visits`);
+  R.push('--- device (latest open) ---');R.push(kvs(o)||'(none)');
+  const cl=curList();R.push('--- current list ---');
+  if(cl){const c=counts(cl);R.push(`${cl.words.length} words | test ${cl.test!=null?dayInput(cl.test)+' ('+(cl.test-today())+' days)':'not set'} | ready ${c.ready} learning ${c.learning} missed ${c.shaky} new ${c.new}`);
+    if(cl.mocks&&cl.mocks.length)R.push('mock tests: '+cl.mocks.map(m=>`${dayInput(m.day)} ${m.words}/${m.total} words ${m.chars}/${m.totalChars} chars`).join(' | '));
+    if(cl.real)R.push(`real test: ${dayInput(cl.real.day)} ${cl.real.right}/${cl.real.total} words`);
+  }else R.push('(none)');
+  R.push('--- sessions ---');
+  const ss=ev('session_start'),se=ev('session_end');
+  R.push(`practice started ${ss.filter(x=>x.mode==='practice').length}, finished ${se.filter(x=>x.mode==='practice').length} | mock started ${ss.filter(x=>x.mode==='mock').length}, finished ${se.filter(x=>x.mode==='mock').length}`);
+  se.forEach(x=>R.push(`${stamp(x._t)} ${x.mode} ${x.words}/${x.total} words ${x.chars}/${x.totalChars} chars in ${Math.round(x.ms/1000)}s`));
+  const marks=ev('mark');R.push('--- by word (every attempt) ---');
+  const by=new Map();marks.forEach(x=>{const e=by.get(x.hz)||{n:0,ok:0,bad:''};e.n++;if(x.ok)e.ok++;e.bad+=x.badc||'';by.set(x.hz,e);});
+  R.push([...by.entries()].map(([hz,e])=>`${hz} ${e.ok}/${e.n}${e.bad?' missed:'+[...new Set(e.bad)].join(''):''}`).join(' | ')||'none');
+  const wr=ev('reveal').map(x=>x.ms);if(wr.length)R.push(`write-to-reveal time: median ${med(wr)}ms, slowest ${Math.max(...wr)}ms`);
+  const miss=new Map();marks.forEach(x=>[...(x.badc||'')].forEach(c=>miss.set(c,(miss.get(c)||0)+1)));
+  R.push('--- most missed characters ---');R.push([...miss.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([c,n])=>`${c} x${n}`).join(' | ')||'none');
+  R.push('--- friction ---');
+  const dt=new Map();ev('dead_tap').forEach(x=>{const k=x.on+'@'+x._v;dt.set(k,(dt.get(k)||0)+1)});
+  R.push(`no_sound ${ev('nosound').length} | audio_err ${ev('audio_err').length} | replays ${ev('replay').length} | left the app ${ev('hidden').length} | errors ${ev('error').length} | stopped early ${ev('stop').length}`);
+  R.push(`taps on nothing: ${ev('dead_tap').length}${dt.size?' ('+[...dt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,n])=>k+' x'+n).join(', ')+')':''}`);
+  R.push('--- notes ---');const nt=ev('note');R.push(nt.length?nt.map(x=>`${stamp(x._t)} [after ${x.last||'?'}] ${x.text}`).join('\n'):'none');
+  const er=ev('error').slice(-8);if(er.length){R.push('--- errors (last 8) ---');er.forEach(x=>R.push(`${stamp(x._t)} ${x.msg} line=${x.line||'?'}`));}
+  R.push('--- latest events (up to 250) ---');
+  L.slice(-250).forEach(x=>R.push(`${stamp(x._t)} ${x._s} ${x._e}${x._v?'@'+x._v:''} ${kvs(x)}`.trim()));
+  R.push('=== END ===');return R.join('\n');
+}
+function moreHTML(){
+  const st=S.settings,on=st.trial!==false;
+  const sel=(id,label,val,opts)=>`<label class="f" for="${id}">${label}<select id="${id}" name="${id}">${opts.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(val)?'selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
+  const rec=audioURL.size;
+  return `<div class="stack">
+    <div class="panel"><h2>Voice</h2>
+      <p class="note">Recordings made in the garden’s Words &amp; sounds play first (${rec} found for words on this device). Other words use the computer voice.</p>
+      <div class="stack" style="margin-top:8px">
+        <label class="f" for="s-voice">Chinese voice<select id="s-voice" name="voice"><option value="">Automatic (softest female voice found)</option>${zhVoices.map(v=>`<option value="${esc(v.name)}" ${st.voice===v.name?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select></label>
+        ${sel('s-rate','Speed',st.rate,[[0.45,'Very slow'],[0.6,'Slow'],[0.75,'Gentle'],[0.9,'Normal']])}
+        ${sel('s-pitch','Pitch',st.pitch,[[0.95,'Slightly lower'],[1,'Natural'],[1.1,'Slightly higher']])}
+        <div class="row"><button class="btn" data-act="vtest">Test the voice</button><span class="note" id="vmsg" aria-live="polite">${zhVoice?'Now using: '+esc(zhVoice.name):'No Chinese computer voice on this device. Read the words aloud, or record them in the garden.'}</span></div>
+      </div></div>
+    <div class="panel"><h2>Trial log</h2>
+      <p class="note">While you test, this page keeps a private log on this device: what was practised, which characters were missed, how long she took, and errors. It holds no names or recordings, and leaves the device only if you copy it and paste it to Claude.</p>
+      <label class="chk" for="tr-on"><input type="checkbox" id="tr-on" ${on?'checked':''}> Keep the trial log</label>
+      <p class="note">${LOG.length} events · build ${esc(BUILD)}</p>
+      <label class="f" for="tr-note" style="margin-top:8px">Add a note<textarea id="tr-note" name="note" autocomplete="off" style="min-height:80px" placeholder="What did you notice…"></textarea></label>
+      <div class="row" style="margin-top:8px"><button class="btn" data-act="note">Save note</button><span class="note" id="tr-msg" aria-live="polite"></span></div>
+      <div class="row" style="margin-top:12px"><button class="btn" data-act="log-copy">Copy trial log</button>
+        ${confirmLog?`<button class="btn warn" data-act="log-clear-yes">Delete the whole log</button><button class="btn sec" data-act="log-clear-no">Keep it</button>`:`<button class="btn sec" data-act="log-clear-ask">Clear…</button>`}</div>
+      <p class="note" id="tr-cmsg" aria-live="polite"></p>
+      <textarea id="tr-text" readonly placeholder="The copied log shows here." style="margin-top:4px;min-height:120px;font-size:12px"></textarea></div>
+    ${storageOK?'':'<div class="warnnote">This browser is not saving data (private window or blocked storage). Lists will be lost when the page closes.</div>'}
+  </div>`;
+}
+
+/* ---------- actions ---------- */
+function act(a,el){
+  if(view==='edit'&&['save','cancel','del-ask','del-yes','del-no'].includes(a))captureEdit();
+  switch(a){
+    case 'add':openEdit(null);break;
+    case 'edit':openEdit(curList());break;
+    case 'cancel':editState=null;realState=null;go('home');break;
+    case 'save':saveEdit();break;
+    case 'del-ask':confirmDel=true;render();break;
+    case 'del-no':confirmDel=false;render();break;
+    case 'del-yes':{const id=editState.id;S.lists=S.lists.filter(l=>l.id!==id);if(S.cur===id)S.cur=S.lists[0]?S.lists[0].id:null;save();tlog('list_delete');editState=null;confirmDel=false;toast='List deleted.';go('home');break;}
+    case 'open-list':S.cur=el.dataset.id;save();render();window.scrollTo(0,0);break;
+    case 'hear':say(el.dataset.hz);break;
+    case 'practice':startSession('practice');break;
+    case 'mock':startSession('mock');break;
+    case 'real':openReal();break;
+    case 'toggle-real':{const id=el.dataset.id;realState.wrong.has(id)?realState.wrong.delete(id):realState.wrong.add(id);render();break;}
+    case 'save-real':{const L=curList(),n=L.words.length;
+      L.words.forEach(w=>recordAttempt(w,'r',!realState.wrong.has(w.id),[]));
+      L.real={day:today(),right:n-realState.wrong.size,total:n,wrong:[...realState.wrong]};save();
+      tlog('real_saved',{right:L.real.right,total:n,wrongc:L.words.filter(w=>realState.wrong.has(w.id)).map(w=>w.hz).join(',')});
+      realState=null;toast=`Saved: ${L.real.right} of ${n} right.`;go('home');break;}
+    case 'garden':{const L=curList(),r=addToGarden(L);toast=r.err?'Could not save to the garden on this browser.':`Added ${r.added} word${r.added===1?'':'s'} to the garden${r.skipped?` (${r.skipped} already there)`:''}.`;render();window.scrollTo(0,0);break;}
+    case 'more':go('more');break;
+    case 'home':sess=null;go('home');break;
+    case 'stop':tlog('stop',{at:sess?sess.i:null});hush();sess=null;go('home');break;
+    case 'replay':tlog('replay',{hz:curWord().hz});say(curWord().hz);break;
+    case 'cover':tlog('look',{hz:curWord().hz,ms:Date.now()-sess.tStep});sess.step='write';sess.tStep=Date.now();tlog('write_show',{hz:curWord().hz,rec:audioURL.has(curWord().hz),voice:!!zhVoice});say(curWord().hz);render();break;
+    case 'show':tlog('reveal',{hz:curWord().hz,ms:Date.now()-sess.tStep});sess.step='check';sess.tStep=Date.now();hush();render();break;
+    case 'toggle':{const i=+el.dataset.i;sess.bad.has(i)?sess.bad.delete(i):sess.bad.add(i);render();break;}
+    case 'next':finishWord();break;
+    case 'redo-missed':{const ids=sess.summary.firsts.filter(x=>!x.r.ok).map(x=>x.w.id);startSession('practice',ids);break;}
+    case 'vtest':{const ok=(()=>{if(!zhVoice)return false;try{hush();const ut=new SpeechSynthesisUtterance('小猫在花园里。');ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){return false}})();if(!ok)$('#vmsg').textContent='No Chinese computer voice on this device.';break;}
+    case 'note':{const t=$('#tr-note').value.trim();if(!t){$('#tr-msg').textContent='Write something first.';break;}
+      const lm=[...LOG].reverse().find(x=>x._e==='mark');tlog('note',{text:t.slice(0,400),last:lm?lm.hz:'-'});logFlush();$('#tr-note').value='';$('#tr-msg').textContent='Saved.';break;}
+    case 'log-copy':{const txt=reportText();$('#tr-text').value=txt;
+      const fail=()=>{$('#tr-text').select();$('#tr-cmsg').textContent='Select all the text below and copy it.'};
+      try{navigator.clipboard.writeText(txt).then(()=>{$('#tr-cmsg').textContent='Copied. Paste it into the chat.'},fail)}catch(e){fail()}break;}
+    case 'log-clear-ask':confirmLog=true;render();break;
+    case 'log-clear-no':confirmLog=false;render();break;
+    case 'log-clear-yes':LOG=[];logFlush();confirmLog=false;render();break;
+  }
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;act(b.dataset.act,b);});
+document.addEventListener('change',e=>{const id=e.target.id;
+  if(id==='s-voice'){S.settings.voice=e.target.value;save();pickVoice();tlog('setting',{k:'voice',val:S.settings.voice});$('#vmsg').textContent=zhVoice?'Now using: '+zhVoice.name:'No Chinese computer voice on this device.';}
+  else if(id==='s-rate'){S.settings.rate=+e.target.value;save();tlog('setting',{k:'rate',val:S.settings.rate});}
+  else if(id==='s-pitch'){S.settings.pitch=+e.target.value;save();tlog('setting',{k:'pitch',val:S.settings.pitch});}
+  else if(id==='tr-on'){if(!e.target.checked)tlog('trial_off');S.settings.trial=e.target.checked;save();logFlush();render();}
+});
+document.addEventListener('pointerdown',ev=>{const el=ev.target;if(!el||!el.closest||el.closest('button,a,input,select,textarea,label,summary'))return;
+  tlog('dead_tap',{on:(typeof el.className==='string'&&el.className.split(' ')[0])||el.tagName||'?'});},true);
+
+/* ---------- boot ---------- */
+async function start(){
+  const g=readGarden();if(g&&g.settings&&g.settings.flower)$('#app').dataset.flower=g.settings.flower;
+  render();
+  await loadAudio();
+  tlog('open',{build:BUILD,ua:navigator.userAgent.slice(0,150),scr:`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,win:`${innerWidth}x${innerHeight}`,
+    store:storageOK,speech:!!window.speechSynthesis,zh:zhVoice?zhVoice.name+' '+zhVoice.lang:'none',zhN:zhVoices.length,rec:audioURL.size,lists:S.lists.length,words:(curList()||{words:[]}).words.length});
+  if(view==='more')render();
+}
+start();
+})();
+</script>
+</body>
+</html>

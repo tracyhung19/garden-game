@@ -4,6 +4,10 @@ A Chinese word game for a Primary 1 learner. Each word is a plant that grows wit
 
 Single self-contained page: open `index.html` in a browser, or host it as a static file (for example GitHub Pages). Progress and recordings stay in the browser on the device where she plays.
 
+## 听写 spelling test practice (`tingxie.html`)
+
+A second page, linked from a card on the garden. Add the week's word list and the test day; the page plans the days left, runs practice (look, cover, write on paper, check) and a mock test, and marks each character in 田字格 boxes. Words move through New, Missed, Getting there and Ready; Ready means right on two different days and not missed since. After the real test, enter the result and add the words to the garden, where they keep being reviewed. Recordings made in the garden's Words & sounds play here for the same words. Data lives in `zitingxie.v1` and its own trial log in `zitingxie.log.v1`. The page cannot read pencil on paper, so a grown-up marks the writing.
+
 ## Mobile fit and install
 
 `index.html` is a full document with a mobile viewport tag, safe-area padding, theme colours and a web manifest, so on a phone it lays out at device width and can be added to the Home Screen as a full-screen app (Chrome: ⋮ → Add to Home screen or Install app). The Android Back gesture returns from a round or the Grown-ups corner to the garden instead of leaving the game.
