@@ -36,5 +36,6 @@ for name in ("garden.html", "tingxie.html"):
     (out / name).write_text(inline_theme(strip_pwa((root / name).read_text(encoding="utf-8"))), encoding="utf-8")
 
 (out / "vendor").mkdir(exist_ok=True)
-shutil.copy(root / "vendor" / "hanzi-writer.min.js", out / "vendor" / "hanzi-writer.min.js")
+for f in (root / "vendor").glob("*.js"):
+    shutil.copy(f, out / "vendor" / f.name)
 print("built", ", ".join(sorted(p.name for p in out.iterdir())), "in", out)

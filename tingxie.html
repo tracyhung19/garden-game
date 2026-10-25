@@ -134,6 +134,17 @@ textarea{min-height:140px}
 .toggle button{border:0;background:none;padding:6px 16px;font-size:14px;color:var(--ink-2)}
 .toggle button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
 @media (pointer:coarse){.toggle button{min-height:40px}}
+.py.big{font-size:32px;color:var(--ink)}
+.pyrow{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;background:var(--surface-2);border-radius:12px;padding:6px 10px}
+.pyrow .badge{margin-left:auto}
+.pyrow .han{font-size:28px;line-height:1.1}
+.pyin{flex:1 1 160px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--surface);min-width:0;font-size:18px;font-family:var(--f-display)}
+.pycheck{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:4px}
+.pybtn{display:inline-flex;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:6px 16px;min-height:48px}
+.pybtn .py{min-height:0;color:var(--ink)}
+.pybtn .mk{font-weight:800;font-size:22px;color:var(--ok)}
+.pybtn.bad{border-color:var(--miss);background:var(--miss-soft)}
+.pybtn.bad .mk{color:var(--miss)}
 .txcard{display:flex}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -147,7 +158,7 @@ textarea{min-height:140px}
 <script>
 (function(){
 'use strict';
-const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-10.1';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-25.1';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -215,6 +226,29 @@ function say(hz){hush();const u=audioURL.get(hz);
   if(zhVoice){try{const ut=new SpeechSynthesisUtterance(hz);ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){}}
   tlog('nosound',{hz});return false;}
 
+/* ---------- Hanyu Pinyin from the characters ---------- */
+const NEUTRAL={月亮:'yuè liang',眼睛:'yǎn jing',耳朵:'ěr duo',星星:'xīng xing',太阳:'tài yang',朋友:'péng you',东西:'dōng xi',休息:'xiū xi',喜欢:'xǐ huan',衣服:'yī fu',
+  桌子:'zhuō zi',椅子:'yǐ zi',孩子:'hái zi',哥哥:'gē ge',姐姐:'jiě jie',弟弟:'dì di',妹妹:'mèi mei',爷爷:'yé ye',奶奶:'nǎi nai',叔叔:'shū shu',学生:'xué sheng',
+  什么:'shén me',我们:'wǒ men',你们:'nǐ men',他们:'tā men',她们:'tā men',知道:'zhī dao',觉得:'jué de',漂亮:'piào liang',窗户:'chuāng hu',葡萄:'pú tao',先生:'xiān sheng',
+  地方:'dì fang',时候:'shí hou',清楚:'qīng chu',热闹:'rè nao',舒服:'shū fu',事情:'shì qing',头发:'tóu fa',鼻子:'bí zi',嘴巴:'zuǐ ba',脑袋:'nǎo dai',帽子:'mào zi',
+  袜子:'wà zi',裙子:'qún zi',房子:'fáng zi',儿子:'ér zi'};
+let pyLoad=null;
+function loadPinyin(){
+  if(window.pinyinPro)return Promise.resolve(true);
+  if(pyLoad)return pyLoad;
+  pyLoad=new Promise(res=>{const el=document.createElement('script');el.src='vendor/pinyin-pro.js';
+    el.onload=()=>{try{window.pinyinPro.customPinyin(NEUTRAL)}catch(e){}res(!!window.pinyinPro)};
+    el.onerror=()=>{pyLoad=null;tlog('pinyin_load_fail');res(false)};document.head.appendChild(el);});
+  return pyLoad;
+}
+function autoPinyin(hz){
+  if(!window.pinyinPro)return '';
+  try{const a=window.pinyinPro.pinyin(hz,{toneType:'symbol',type:'array'});if(!a||!a.length)return '';
+    return a.join([...hz].length<=3?'':' ');}catch(e){return '';}
+}
+const pyOn=w=>{const L=sess?listById(sess.listId):curList();return !!(L&&L.pinyinTest!==false&&w.py);};
+const pyLine=w=>`<div class="py ${pyOn(w)?'big':''}" lang="zh-Hans">${esc(w.py||'')}</div>`;
+
 /* ---------- how well each word is known ---------- */
 function wStatus(w){
   const h=w.hist;if(!h.length)return 'new';
@@ -224,7 +258,7 @@ function wStatus(w){
 }
 const STATUS_LABEL={new:'New',shaky:'Missed',learning:'Getting there',ready:'Ready'};
 function counts(L){const c={new:0,shaky:0,learning:0,ready:0};L.words.forEach(w=>c[wStatus(w)]++);return c;}
-function recordAttempt(w,k,ok,bad,pk){w.hist.push(pk?{d:today(),k,ok,bad,pk}:{d:today(),k,ok,bad});if(w.hist.length>24)w.hist=w.hist.slice(-24);save();}
+function recordAttempt(w,k,ok,bad,pk,pw){const a={d:today(),k,ok,bad};if(pk)a.pk=pk;if(pw)a.pw=1;w.hist.push(a);if(w.hist.length>24)w.hist=w.hist.slice(-24);save();}
 
 function planFor(L){
   const t=today(),dl=L.test==null?null:L.test-t,n=L.words.length;
@@ -372,7 +406,7 @@ function homeHTML(){
     </div>
     <div class="panel"><h3>The words (${n})</h3><p class="note">Tap a word to hear it. Ready means right twice on two different days without peeking, and not missed since.</p>
       <div class="words" style="margin-top:8px">${L.words.map(w=>{const s=wStatus(w);return `<button class="wchip" data-act="hear" data-hz="${esc(w.hz)}" aria-label="Hear ${esc(w.hz)}, ${STATUS_LABEL[s]}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="meta"><span>${esc(w.py||'')}</span><span class="badge ${s}">${s==='ready'?'✓ ':''}${STATUS_LABEL[s]}</span></span></button>`;}).join('')}</div>
-      ${lastMock?`<p class="note" style="margin-top:10px">Last mock test (${esc(dayLong(lastMock.day))}): ${lastMock.words} of ${lastMock.total} words, ${lastMock.chars} of ${lastMock.totalChars} characters.</p>`:''}
+      ${lastMock?`<p class="note" style="margin-top:10px">Last mock test (${esc(dayLong(lastMock.day))}): ${lastMock.words} of ${lastMock.total} words, ${lastMock.chars} of ${lastMock.totalChars} characters${lastMock.totalPy?`, ${lastMock.py} of ${lastMock.totalPy} pinyin`:''}.</p>`:''}
       ${L.real?`<p class="note">Real test (${esc(dayLong(L.real.day))}): ${L.real.right} of ${L.real.total} words.</p>`:''}</div>
     ${howPanel}
     <div class="panel"><div class="row"><button class="btn" data-act="add">Add a new list</button></div>
@@ -387,7 +421,9 @@ function editHTML(){
       <label class="f" for="e-name">List name (optional)<input id="e-name" name="listname" autocomplete="off" value="${esc(e.name)}" placeholder="e.g. Lesson 3…"></label>
       <label class="f" for="e-date">Test day<input id="e-date" name="testday" type="date" value="${esc(e.date)}"></label>
       <label class="f" for="e-words">Words, one per line (pinyin is optional)<textarea id="e-words" name="words" lang="zh-Hans" autocomplete="off" spellcheck="false" placeholder="猫 māo&#10;苹果 píngguǒ&#10;月亮…">${esc(e.text)}</textarea></label>
-      <p class="note">You can also separate words with spaces or commas. Add pinyin after a word if the teacher gave it. Up to 40 words.</p>
+      <p class="note">You can also separate words with spaces or commas. Up to 40 words. Pinyin appears below as you type. To use your own, type it after the word.</p>
+      <div id="e-pv" class="stack" style="gap:8px" aria-live="polite"></div>
+      <label class="chk" for="e-pytest"><input type="checkbox" id="e-pytest" name="pinyintest" ${e.pytest?'checked':''}> Her test also asks for pinyin</label>
       ${e.msg?`<div class="warnnote" role="alert">${esc(e.msg)}</div>`:''}
       <div class="row"><button class="btn" data-act="save">Save list</button><button class="btn sec" data-act="cancel">Cancel</button>
         ${e.id?(confirmDel?`<button class="btn warn" data-act="del-yes">Delete this list</button><button class="btn sec" data-act="del-no">Keep it</button>`:`<button class="btn sec" data-act="del-ask">Delete…</button>`):''}</div>
@@ -407,25 +443,39 @@ function parseWords(text){
   });
   return out.slice(0,40);
 }
-function captureEdit(){const g=id=>{const el=$(id);return el?el.value:''};editState.name=g('#e-name');editState.date=g('#e-date');editState.text=g('#e-words');}
-function openEdit(L){
-  editState=L?{id:L.id,name:L.name,date:L.test!=null?dayInput(L.test):'',text:L.words.map(w=>w.py?`${w.hz} ${w.py}`:w.hz).join('\n'),msg:''}
-             :{id:null,name:'',date:'',text:'',msg:''};
-  confirmDel=false;go('edit');
+function captureEdit(){const g=id=>{const el=$(id);return el?el.value:''};editState.name=g('#e-name');editState.date=g('#e-date');editState.text=g('#e-words');const c=$('#e-pytest');if(c)editState.pytest=c.checked;}
+let pvT=null;
+async function updatePreview(){
+  const el=$('#e-pv'),ta=$('#e-words');if(!el||!ta||view!=='edit')return;
+  if(!parseWords(ta.value).length){el.innerHTML='';return;}
+  const ok=await loadPinyin();
+  if(view!=='edit'||!$('#e-pv')||!$('#e-words'))return;
+  const words=parseWords($('#e-words').value),e=editState;
+  el.innerHTML=`<h3>Pinyin</h3><p class="note">${ok?'Made automatically. Check it against her textbook: some words keep a light tone (like 月亮 yuèliang), and some characters have more than one sound. Tap a box to change it.':'Pinyin could not be made on this device. Type it after each word, or into the boxes.'}</p>`+words.map(p=>{
+    const auto=ok?autoPinyin(p.hz):'',mine=e.pyMap[p.hz],val=mine!=null?mine:(p.py||e.stored[p.hz]||auto);
+    const tag=mine!=null?'edited':p.py?'typed':e.stored[p.hz]?'saved':auto?'auto':'none';
+    return `<div class="pyrow"><span class="han" lang="zh-Hans">${esc(p.hz)}</span><input class="pyin" data-hz="${esc(p.hz)}" value="${esc(val)}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Pinyin for ${esc(p.hz)}"><span class="badge">${tag}</span></div>`;}).join('');
 }
-function saveEdit(){
+function openEdit(L){
+  editState=L?{id:L.id,name:L.name,date:L.test!=null?dayInput(L.test):'',text:L.words.map(w=>w.hz).join('\n'),msg:'',pytest:L.pinyinTest!==false,pyMap:{},stored:Object.fromEntries(L.words.map(w=>[w.hz,w.py||'']))}
+             :{id:null,name:'',date:'',text:'',msg:'',pytest:true,pyMap:{},stored:{}};
+  confirmDel=false;go('edit');loadPinyin().then(()=>updatePreview());
+}
+async function saveEdit(){
   captureEdit();const words=parseWords(editState.text);
   if(!words.length){editState.msg='Add at least one Chinese word, for example 猫.';render();return;}
-  const test=parseDay(editState.date);
-  if(editState.id){const L=listById(editState.id),old=new Map(L.words.map(w=>[w.hz,w]));
-    L.words=words.map(p=>{const o=old.get(p.hz);return o?Object.assign(o,{py:p.py||o.py}):{id:uid(),hz:p.hz,py:p.py,hist:[]};});
-    L.name=editState.name.trim()||L.name;L.test=test;
+  await loadPinyin();
+  const e=editState,pyOf=p=>(e.pyMap[p.hz]!=null?e.pyMap[p.hz]:(p.py||e.stored[p.hz]||autoPinyin(p.hz))).trim();
+  const test=parseDay(e.date);
+  if(e.id){const L=listById(e.id),old=new Map(L.words.map(w=>[w.hz,w]));
+    L.words=words.map(p=>{const o=old.get(p.hz);return o?Object.assign(o,{py:pyOf(p)}):{id:uid(),hz:p.hz,py:pyOf(p),hist:[]};});
+    L.name=e.name.trim()||L.name;L.test=test;L.pinyinTest=e.pytest;
   }else{
-    const L={id:uid(),name:editState.name.trim()||`List of ${dayLong(today())}`,created:today(),test,mocks:[],real:null,garden:false,
-      words:words.map(p=>({id:uid(),hz:p.hz,py:p.py,hist:[]}))};
+    const L={id:uid(),name:e.name.trim()||`List of ${dayLong(today())}`,created:today(),test,mocks:[],real:null,garden:false,pinyinTest:e.pytest,
+      words:words.map(p=>({id:uid(),hz:p.hz,py:pyOf(p),hist:[]}))};
     S.lists.unshift(L);S.cur=L.id;
   }
-  save();tlog('list_save',{n:words.length,dl:test==null?null:test-today(),isNew:!editState.id});
+  save();tlog('list_save',{n:words.length,dl:test==null?null:test-today(),isNew:!e.id,py:words.filter(p=>pyOf(p)).length,pytest:e.pytest?1:0,edited:Object.keys(e.pyMap).length});
   prefetchChars(listById(S.cur));
   toast=`Saved ${words.length} word${words.length===1?'':'s'}.`;editState=null;go('home');
 }
@@ -446,7 +496,7 @@ function startSession(mode,onlyIds){
   beginWord();go('step');
 }
 function beginWord(){
-  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();sess.ci=0;sess.slips=[];sess.verified=false;sess.trace=false;sess.noScreen=false;sess.peeks=0;
+  const w=curWord();sess.bad=new Set();sess.tStep=Date.now();sess.ci=0;sess.slips=[];sess.verified=false;sess.trace=false;sess.noScreen=false;sess.peeks=0;sess.pyBad=false;
   sess.step=sess.mode==='practice'&&['new','shaky'].includes(wStatus(w))?'look':'write';
   tlog(sess.step==='look'?'look_show':'write_show',{hz:w.hz,rec:audioURL.has(w.hz),voice:!!zhVoice,scr:S.settings.writeMode==='screen'?1:0});
   say(w.hz);
@@ -478,37 +528,39 @@ function stepHTML(){
   const small=`<button class="speak sm" data-act="replay" aria-label="Hear the word again">${speakerIcon}</button>`;
   if(sess.step==='look'){
     if(typeof HanziWriter!=='undefined'){
-      stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look. Say it. Watch how it is written.</p>${minis(w,'pick')}<div class="padwrap"><div class="pad" id="pad"></div></div><p class="note" id="padnote" aria-live="polite"></p>
-        <div class="row" style="justify-content:center"><button class="btn sec" data-act="watch">Watch again</button><button class="btn sec" data-act="trace">Trace it</button>${small}</div><div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+      stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look. Say it. Watch how it is written.</p>${pyLine(w)}${minis(w,'pick')}<div class="padwrap"><div class="pad" id="pad"></div></div><p class="note" id="padnote" aria-live="polite"></p>
+        <div class="row" style="justify-content:center"><button class="btn sec" data-act="watch">Watch again</button><button class="btn sec" data-act="trace">Trace it</button>${small}</div>`;
     }else{
-      stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look at the word. Say it.</p>${boxes(w,'show')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>${sound}`;
+      stage=`<p class="cue"><span class="em" aria-hidden="true">👀</span> Look at the word. Say it.</p>${boxes(w,'show')}${pyLine(w)}${sound}`;
     }
     dock=`<button class="big" data-act="cover">Cover it</button>`;
   }else if(sess.step==='write'){
     if(screenOn()){
-      stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on the screen.</p>${minis(w,'prog')}<div class="padwrap"><div class="pad" id="pad"></div></div>
+      stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on the screen${pyOn(w)?', then the pinyin on paper':''}.</p>${minis(w,'prog')}<div class="padwrap"><div class="pad" id="pad"></div></div>
         <p class="note" id="padnote" aria-live="polite">${sess.mode==='mock'?'Mock test: no hints.':'Draw each stroke in order. A hint appears after two slips.'}</p>
         <div class="row" style="justify-content:center">${small}<button class="btn sec" data-act="skip-char">Skip this character</button>${sess.mode==='practice'?'<button class="btn sec" data-act="peek">Peek (3 sec)</button>':''}</div><div id="peek" class="tzgs" lang="zh-Hans" aria-live="polite"></div>`;
       dock=`<button class="big sec" data-act="paper">Use paper instead</button>`;
     }else{
-      stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on paper.</p>${sound}${boxes(w,'empty')}
+      stage=`${modeToggle()}<p class="cue"><span class="em" aria-hidden="true">✏️</span> Listen. Write it on paper${pyOn(w)?': the characters and the pinyin':''}.</p>${sound}${boxes(w,'empty')}
         ${canHear(w.hz)?'':'<p class="note">No sound for this word on this device. Read it aloud to her.</p>'}
         ${sess.mode==='practice'?'<button class="btn sec" data-act="peek">Peek (3 sec)</button>':''}<div id="peek" class="tzgs" lang="zh-Hans" aria-live="polite"></div>`;
       dock=`<button class="big" data-act="show">Show me</button>`;
     }
   }else{
-    const nb=sess.bad.size;
-    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> ${sess.verified?'Checked on screen.':'Check the paper.'}</p><p class="note" style="margin:0">${sess.verified?'Tap a character to change the mark.':'Tap any character she got wrong.'}${sess.peeks?` She peeked ${sess.peeks} time${sess.peeks===1?'':'s'}, so this try will not count towards Ready.`:''}</p>${boxes(w,'mark')}<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+    const nb=sess.bad.size+(sess.pyBad?1:0);
+    const pyBtn=pyOn(w)?`<div class="pycheck"><span class="note">Pinyin</span><button class="pybtn ${sess.pyBad?'bad':''}" data-act="toggle-py" aria-pressed="${!!sess.pyBad}" aria-label="Pinyin ${esc(w.py)}, ${sess.pyBad?'marked wrong':'correct'}"><span class="py" lang="zh-Hans">${esc(w.py)}</span><span class="mk" aria-hidden="true">${sess.pyBad?'✗':'✓'}</span></button></div>`:`<div class="py" lang="zh-Hans">${esc(w.py||'')}</div>`;
+    stage=`<p class="cue"><span class="em" aria-hidden="true">✅</span> ${sess.verified?'Checked on screen.':'Check the paper.'}</p><p class="note" style="margin:0">${sess.verified?'Tap a character to change the mark.':'Tap any character she got wrong.'}${pyOn(w)?' Tap the pinyin too if it was wrong.':''}${sess.peeks?` She peeked ${sess.peeks} time${sess.peeks===1?'':'s'}, so this try will not count towards Ready.`:''}</p>${boxes(w,'mark')}${pyBtn}`;
     dock=`<button class="big" data-act="next">${nb?`Next · ${nb} wrong`:'All correct · Next'}</button>`;
   }
   return `<div class="step">${top}<div class="stage">${stage}</div><div class="dock">${dock}</div></div>`;
 }
 function finishWord(){
-  const w=curWord(),bad=[...sess.bad].sort((a,b)=>a-b),ok=!bad.length,k=sess.mode==='mock'?'m':'p';
-  recordAttempt(w,k,ok,bad,sess.peeks);
-  sess.results.push({id:w.id,ok,bad});
-  if(!sess.first.has(w.id))sess.first.set(w.id,{ok,bad});
-  tlog('mark',{hz:w.hz,k,ok,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep,scr:sess.verified?1:0,slips:sess.verified?sess.slips.join(','):undefined,peeks:sess.peeks||undefined});
+  const w=curWord(),bad=[...sess.bad].sort((a,b)=>a-b),k=sess.mode==='mock'?'m':'p';
+  const pon=pyOn(w),pw=pon&&!!sess.pyBad,ok=!bad.length&&!pw;
+  recordAttempt(w,k,ok,bad,sess.peeks,pw);
+  sess.results.push({id:w.id,ok,bad,pw});
+  if(!sess.first.has(w.id))sess.first.set(w.id,{ok,bad,pw,pon});
+  tlog('mark',{hz:w.hz,k,ok,pw:pw?1:undefined,pyon:pon?1:undefined,badc:bad.map(i=>chars(w.hz)[i]).join(''),ms:Date.now()-sess.tStep,scr:sess.verified?1:0,slips:sess.verified?sess.slips.join(','):undefined,peeks:sess.peeks||undefined});
   if(!ok&&sess.mode==='practice'&&!sess.retried.has(w.id)&&Date.now()-sess.t0<360000){sess.retried.add(w.id);sess.queue.push(w.id);}
   sess.i++;
   if(sess.i>=sess.queue.length){endSession();}else{beginWord();render();}
@@ -517,9 +569,11 @@ function endSession(){
   const L=listById(sess.listId);sess.done=true;
   const firsts=[...sess.first.entries()].map(([id,r])=>({w:wordOf(L,id),r}));
   sess.summary={words:firsts.filter(x=>x.r.ok).length,total:firsts.length,
-    chars:firsts.reduce((a,x)=>a+chars(x.w.hz).length-x.r.bad.length,0),totalChars:firsts.reduce((a,x)=>a+chars(x.w.hz).length,0),firsts};
-  if(sess.mode==='mock'){L.mocks=L.mocks||[];L.mocks.push({day:today(),words:sess.summary.words,total:sess.summary.total,chars:sess.summary.chars,totalChars:sess.summary.totalChars});save();}
-  tlog('session_end',{mode:sess.mode,words:sess.summary.words,total:sess.summary.total,chars:sess.summary.chars,totalChars:sess.summary.totalChars,ms:Date.now()-sess.t0});
+    chars:firsts.reduce((a,x)=>a+chars(x.w.hz).length-x.r.bad.length,0),totalChars:firsts.reduce((a,x)=>a+chars(x.w.hz).length,0),
+    py:firsts.filter(x=>x.r.pon&&!x.r.pw).length,totalPy:firsts.filter(x=>x.r.pon).length,firsts};
+  const sm=sess.summary;
+  if(sess.mode==='mock'){L.mocks=L.mocks||[];L.mocks.push({day:today(),words:sm.words,total:sm.total,chars:sm.chars,totalChars:sm.totalChars,py:sm.py,totalPy:sm.totalPy});save();}
+  tlog('session_end',{mode:sess.mode,words:sm.words,total:sm.total,chars:sm.chars,totalChars:sm.totalChars,py:sm.py,totalPy:sm.totalPy,ms:Date.now()-sess.t0});
   go('result');
 }
 function resultHTML(){
@@ -527,9 +581,9 @@ function resultHTML(){
   const headline=sess.mode==='mock'?'Mock test result':'Practice done';
   return `<div class="stack"><div class="panel" style="text-align:center"><h2>${headline}</h2>
     <div class="score" style="margin-top:8px">${s.words} of ${s.total} words</div>
-    <p class="muted">${s.chars} of ${s.totalChars} characters right${sess.mode==='practice'?' first time':''}.</p>
+    <p class="muted">${s.chars} of ${s.totalChars} characters right${sess.mode==='practice'?' first time':''}.${s.totalPy?` ${s.py} of ${s.totalPy} pinyin right.`:''}</p>
     <p>${missed.length?`${missed.length} to practise again.`:'Every word was right. Well done!'}</p></div>
-    <div class="panel"><h3>Word by word</h3><div class="rlist" style="margin-top:8px">${s.firsts.map(({w,r})=>`<div class="rrow ${r.ok?'ok':'no'}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="note">${esc(w.py||'')}${r.bad.length?` · missed ${esc(r.bad.map(i=>chars(w.hz)[i]).join(' '))}`:''}</span><span class="mark">${r.ok?'✓':'✗'}</span></div>`).join('')}</div></div>
+    <div class="panel"><h3>Word by word</h3><div class="rlist" style="margin-top:8px">${s.firsts.map(({w,r})=>`<div class="rrow ${r.ok?'ok':'no'}"><span class="han" lang="zh-Hans">${esc(w.hz)}</span><span class="note">${esc(w.py||'')}${r.bad.length?` · missed ${esc(r.bad.map(i=>chars(w.hz)[i]).join(' '))}`:''}${r.pw?' · pinyin':''}</span><span class="mark">${r.ok?'✓':'✗'}</span></div>`).join('')}</div></div>
     <div class="row">${missed.length?`<button class="big" data-act="redo-missed">Practise the missed words</button>`:''}<button class="big sec" data-act="home">Back to this week</button></div></div>`;
 }
 
@@ -569,14 +623,19 @@ function reportText(){
   R.push('--- device (latest open) ---');R.push(kvs(o)||'(none)');
   const cl=curList();R.push('--- current list ---');
   if(cl){const c=counts(cl);R.push(`${cl.words.length} words | test ${cl.test!=null?dayInput(cl.test)+' ('+(cl.test-today())+' days)':'not set'} | ready ${c.ready} learning ${c.learning} missed ${c.shaky} new ${c.new}`);
-    if(cl.mocks&&cl.mocks.length)R.push('mock tests: '+cl.mocks.map(m=>`${dayInput(m.day)} ${m.words}/${m.total} words ${m.chars}/${m.totalChars} chars`).join(' | '));
+    if(cl.mocks&&cl.mocks.length)R.push('mock tests: '+cl.mocks.map(m=>`${dayInput(m.day)} ${m.words}/${m.total} words ${m.chars}/${m.totalChars} chars${m.totalPy?` ${m.py}/${m.totalPy} pinyin`:''}`).join(' | '));
     if(cl.real)R.push(`real test: ${dayInput(cl.real.day)} ${cl.real.right}/${cl.real.total} words`);
   }else R.push('(none)');
   R.push('--- sessions ---');
   const ss=ev('session_start'),se=ev('session_end');
   R.push(`practice started ${ss.filter(x=>x.mode==='practice').length}, finished ${se.filter(x=>x.mode==='practice').length} | mock started ${ss.filter(x=>x.mode==='mock').length}, finished ${se.filter(x=>x.mode==='mock').length}`);
-  se.forEach(x=>R.push(`${stamp(x._t)} ${x.mode} ${x.words}/${x.total} words ${x.chars}/${x.totalChars} chars in ${Math.round(x.ms/1000)}s`));
-  const marks=ev('mark');R.push('--- by word (every attempt) ---');
+  se.forEach(x=>R.push(`${stamp(x._t)} ${x.mode} ${x.words}/${x.total} words ${x.chars}/${x.totalChars} chars${x.totalPy?` ${x.py}/${x.totalPy} pinyin`:''} in ${Math.round(x.ms/1000)}s`));
+  const marks=ev('mark');
+  const pm=marks.filter(x=>x.pyon);R.push('--- pinyin ---');
+  const pwc=new Map();pm.filter(x=>x.pw).forEach(x=>pwc.set(x.hz,(pwc.get(x.hz)||0)+1));
+  R.push(pm.length?`checked ${pm.length} | wrong ${pm.filter(x=>x.pw).length}${pwc.size?' | most missed: '+[...pwc.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8).map(([h,n])=>h+' x'+n).join(', '):''}`:'not used');
+  const ls=ev('list_save');if(ls.length){const l=ls[ls.length-1];R.push(`last list saved: ${l.n} words, pinyin on ${l.py}, test asks pinyin ${l.pytest?'yes':'no'}, boxes edited by hand ${l.edited}`);}
+  R.push('--- by word (every attempt) ---');
   const by=new Map();marks.forEach(x=>{const e=by.get(x.hz)||{n:0,ok:0,bad:''};e.n++;if(x.ok)e.ok++;e.bad+=x.badc||'';by.set(x.hz,e);});
   R.push([...by.entries()].map(([hz,e])=>`${hz} ${e.ok}/${e.n}${e.bad?' missed:'+[...new Set(e.bad)].join(''):''}`).join(' | ')||'none');
   const wr=ev('reveal').map(x=>x.ms);if(wr.length)R.push(`write-to-reveal time: median ${med(wr)}ms, slowest ${Math.max(...wr)}ms`);
@@ -663,7 +722,8 @@ function act(a,el){
     case 'show':tlog('reveal',{hz:curWord().hz,ms:Date.now()-sess.tStep});sess.step='check';sess.tStep=Date.now();hush();render();break;
     case 'toggle':{const i=+el.dataset.i;sess.bad.has(i)?sess.bad.delete(i):sess.bad.add(i);render();break;}
     case 'peek':{const w=curWord();sess.peeks=(sess.peeks||0)+1;tlog('peek',{hz:w.hz,n:sess.peeks});const el2=$('#peek');
-      if(el2){el2.innerHTML=boxes(w,'show');clearTimeout(sess.peekT);sess.peekT=setTimeout(()=>{const e2=$('#peek');if(e2)e2.innerHTML='';},3000);}break;}
+      if(el2){el2.innerHTML=boxes(w,'show')+(pyOn(w)?pyLine(w):'');clearTimeout(sess.peekT);sess.peekT=setTimeout(()=>{const e2=$('#peek');if(e2)e2.innerHTML='';},3000);}break;}
+    case 'toggle-py':sess.pyBad=!sess.pyBad;render();break;
     case 'next':finishWord();break;
     case 'redo-missed':{const ids=sess.summary.firsts.filter(x=>!x.r.ok).map(x=>x.w.id);startSession('practice',ids);break;}
     case 'vtest':{const ok=(()=>{if(!zhVoice)return false;try{hush();const ut=new SpeechSynthesisUtterance('小猫在花园里。');ut.voice=zhVoice;ut.lang=zhVoice.lang;ut.rate=S.settings.rate;ut.pitch=S.settings.pitch||1;speechSynthesis.speak(ut);return true}catch(e){return false}})();if(!ok)$('#vmsg').textContent='No Chinese computer voice on this device.';break;}
@@ -678,6 +738,11 @@ function act(a,el){
   }
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;act(b.dataset.act,b);});
+document.addEventListener('input',e=>{
+  if(view!=='edit'||!editState)return;
+  if(e.target.id==='e-words'){clearTimeout(pvT);pvT=setTimeout(updatePreview,300);}
+  else if(e.target.classList&&e.target.classList.contains('pyin')){editState.pyMap[e.target.dataset.hz]=e.target.value;const b=e.target.parentNode.querySelector('.badge');if(b)b.textContent='edited';}
+});
 document.addEventListener('change',e=>{const id=e.target.id;
   if(id==='s-voice'){S.settings.voice=e.target.value;save();pickVoice();tlog('setting',{k:'voice',val:S.settings.voice});$('#vmsg').textContent=zhVoice?'Now using: '+zhVoice.name:'No Chinese computer voice on this device.';}
   else if(id==='s-rate'){S.settings.rate=+e.target.value;save();tlog('setting',{k:'rate',val:S.settings.rate});}
