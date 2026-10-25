@@ -158,7 +158,7 @@ textarea{min-height:140px}
 <script>
 (function(){
 'use strict';
-const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-25.1';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-25.2';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -244,7 +244,19 @@ function loadPinyin(){
 function autoPinyin(hz){
   if(!window.pinyinPro)return '';
   try{const a=window.pinyinPro.pinyin(hz,{toneType:'symbol',type:'array'});if(!a||!a.length)return '';
-    return a.join([...hz].length<=3?'':' ');}catch(e){return '';}
+    return a.join(' ');}catch(e){return '';}
+}
+/* one space between the syllables of each character, so she can see where each one ends */
+function spaceIt(hz,val){
+  if(!val||/\s/.test(val)||[...hz].length<2||!window.pinyinPro)return val;
+  const a=autoPinyin(hz);return a&&a.replace(/\s+/g,'')===val?a:val;
+}
+async function migratePinyinSpacing(){
+  if((S.settings.pyV||0)>=2)return;
+  if(!S.lists.some(L=>L.words.some(w=>w.py&&[...w.hz].length>=2&&!/\s/.test(w.py)))){S.settings.pyV=2;save();return;}
+  if(!(await loadPinyin()))return;
+  let n=0;S.lists.forEach(L=>L.words.forEach(w=>{const v=spaceIt(w.hz,w.py);if(v!==w.py){w.py=v;n++;}}));
+  S.settings.pyV=2;save();tlog('pinyin_spaced',{n});if(view==='home')render();
 }
 const pyOn=w=>{const L=sess?listById(sess.listId):curList();return !!(L&&L.pinyinTest!==false&&w.py);};
 const pyLine=w=>`<div class="py ${pyOn(w)?'big':''}" lang="zh-Hans">${esc(w.py||'')}</div>`;
@@ -451,8 +463,8 @@ async function updatePreview(){
   const ok=await loadPinyin();
   if(view!=='edit'||!$('#e-pv')||!$('#e-words'))return;
   const words=parseWords($('#e-words').value),e=editState;
-  el.innerHTML=`<h3>Pinyin</h3><p class="note">${ok?'Made automatically. Check it against her textbook: some words keep a light tone (like 月亮 yuèliang), and some characters have more than one sound. Tap a box to change it.':'Pinyin could not be made on this device. Type it after each word, or into the boxes.'}</p>`+words.map(p=>{
-    const auto=ok?autoPinyin(p.hz):'',mine=e.pyMap[p.hz],val=mine!=null?mine:(p.py||e.stored[p.hz]||auto);
+  el.innerHTML=`<h3>Pinyin</h3><p class="note">${ok?'Made automatically, with a space after each character’s pinyin. Check it against her textbook: some words keep a light tone (like 月亮 yuèliang), and some characters have more than one sound. Tap a box to change it.':'Pinyin could not be made on this device. Type it after each word, or into the boxes.'}</p>`+words.map(p=>{
+    const auto=ok?autoPinyin(p.hz):'',mine=e.pyMap[p.hz],val=mine!=null?mine:spaceIt(p.hz,p.py||e.stored[p.hz]||auto);
     const tag=mine!=null?'edited':p.py?'typed':e.stored[p.hz]?'saved':auto?'auto':'none';
     return `<div class="pyrow"><span class="han" lang="zh-Hans">${esc(p.hz)}</span><input class="pyin" data-hz="${esc(p.hz)}" value="${esc(val)}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Pinyin for ${esc(p.hz)}"><span class="badge">${tag}</span></div>`;}).join('');
 }
@@ -465,7 +477,7 @@ async function saveEdit(){
   captureEdit();const words=parseWords(editState.text);
   if(!words.length){editState.msg='Add at least one Chinese word, for example 猫.';render();return;}
   await loadPinyin();
-  const e=editState,pyOf=p=>(e.pyMap[p.hz]!=null?e.pyMap[p.hz]:(p.py||e.stored[p.hz]||autoPinyin(p.hz))).trim();
+  const e=editState,pyOf=p=>spaceIt(p.hz,(e.pyMap[p.hz]!=null?e.pyMap[p.hz]:(p.py||e.stored[p.hz]||autoPinyin(p.hz))).trim());
   const test=parseDay(e.date);
   if(e.id){const L=listById(e.id),old=new Map(L.words.map(w=>[w.hz,w]));
     L.words=words.map(p=>{const o=old.get(p.hz);return o?Object.assign(o,{py:pyOf(p)}):{id:uid(),hz:p.hz,py:pyOf(p),hist:[]};});
@@ -759,6 +771,7 @@ async function start(){
   render();
   await loadAudio();
   prefetchChars(curList());
+  migratePinyinSpacing();
   tlog('open',{build:BUILD,ua:navigator.userAgent.slice(0,150),scr:`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,win:`${innerWidth}x${innerHeight}`,
     store:storageOK,speech:!!window.speechSynthesis,zh:zhVoice?zhVoice.name+' '+zhVoice.lang:'none',zhN:zhVoices.length,rec:audioURL.size,lists:S.lists.length,words:(curList()||{words:[]}).words.length});
   if(view==='more')render();
