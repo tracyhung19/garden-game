@@ -158,7 +158,7 @@ textarea{min-height:140px}
 <script>
 (function(){
 'use strict';
-const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-25.2';
+const KEY='zitingxie.v1',GKEY='zigarden.v1',LOGKEY='zitingxie.log.v1',BUILD='2026-10-25.3';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -247,16 +247,21 @@ function autoPinyin(hz){
     return a.join(' ');}catch(e){return '';}
 }
 /* one space between the syllables of each character, so she can see where each one ends */
+const baseOf=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 function spaceIt(hz,val){
   if(!val||/\s/.test(val)||[...hz].length<2||!window.pinyinPro)return val;
-  const a=autoPinyin(hz);return a&&a.replace(/\s+/g,'')===val?a:val;
+  let want;try{want=window.pinyinPro.pinyin(hz,{toneType:'symbol',type:'array'}).map(baseOf);}catch(e){return val;}
+  if(want.length<2||baseOf(val)!==want.join(''))return val;
+  let out='',k=0,used=0;
+  for(const ch of val){out+=ch;used+=baseOf(ch).length;if(k<want.length-1&&used>=want[k].length){out+=' ';k++;used=0;}}
+  return out;
 }
 async function migratePinyinSpacing(){
-  if((S.settings.pyV||0)>=2)return;
-  if(!S.lists.some(L=>L.words.some(w=>w.py&&[...w.hz].length>=2&&!/\s/.test(w.py)))){S.settings.pyV=2;save();return;}
+  if((S.settings.pyV||0)>=3)return;
+  if(!S.lists.some(L=>L.words.some(w=>w.py&&[...w.hz].length>=2&&!/\s/.test(w.py)))){S.settings.pyV=3;save();return;}
   if(!(await loadPinyin()))return;
   let n=0;S.lists.forEach(L=>L.words.forEach(w=>{const v=spaceIt(w.hz,w.py);if(v!==w.py){w.py=v;n++;}}));
-  S.settings.pyV=2;save();tlog('pinyin_spaced',{n});if(view==='home')render();
+  S.settings.pyV=3;save();tlog('pinyin_spaced',{n});if(view==='home')render();
 }
 const pyOn=w=>{const L=sess?listById(sess.listId):curList();return !!(L&&L.pinyinTest!==false&&w.py);};
 const pyLine=w=>`<div class="py ${pyOn(w)?'big':''}" lang="zh-Hans">${esc(w.py||'')}</div>`;
@@ -615,7 +620,7 @@ function addToGarden(L){
   L.words.forEach(w=>{
     if(have.has(w.hz)){skipped++;return;}
     const ready=wStatus(w)==='ready',t=today();
-    g.words.push({id:uid(),hz:w.hz,py:w.py||'',en:w.py||'',pic:'',sen:'',active:true,box:ready?2:0,due:ready?t+2:0,seen:ready?1:0,right:ready?1:0,wrong:0,sample:false});
+    g.words.push({id:uid(),pys:1,hz:w.hz,py:w.py||'',en:w.py||'',pic:'',sen:'',active:true,box:ready?2:0,due:ready?t+2:0,seen:ready?1:0,right:ready?1:0,wrong:0,sample:false});
     added++;
   });
   try{localStorage.setItem(GKEY,JSON.stringify(g))}catch(e){return {err:true};}

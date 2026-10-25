@@ -308,7 +308,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}c
 let S=load();
 
 /* ---------- trial log: stays on this device, copied by hand ---------- */
-const BUILD='2026-10-09.2';
+const BUILD='2026-10-25.1';
 const LOGKEY='zigarden.log.v1',SID=Math.random().toString(36).slice(2,6);
 let LOG=[],logT=null;
 try{LOG=JSON.parse(localStorage.getItem(LOGKEY)||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
@@ -435,6 +435,33 @@ function chime(){if(!S.settings.sfx)return;try{ac=ac||new(window.AudioContext||w
   [659,880].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;
     g.gain.setValueAtTime(.0001,t+i*.11);g.gain.exponentialRampToValueAtTime(.12,t+i*.11+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.11+.35);
     o.connect(g);g.connect(ac.destination);o.start(t+i*.11);o.stop(t+i*.11+.4);});}catch(e){}}
+
+/* ---------- Hanyu Pinyin spacing: one space after each character's syllable ---------- */
+let pyLoad=null;
+function loadPinyin(){
+  if(window.pinyinPro)return Promise.resolve(true);
+  if(pyLoad)return pyLoad;
+  pyLoad=new Promise(res=>{const el=document.createElement('script');el.src='vendor/pinyin-pro.js';
+    el.onload=()=>res(!!window.pinyinPro);el.onerror=()=>{pyLoad=null;res(false);};document.head.appendChild(el);});
+  return pyLoad;
+}
+const baseOf=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function autoSyllables(hz){try{return window.pinyinPro.pinyin(hz,{toneType:'symbol',type:'array'})||[];}catch(e){return [];}}
+function spaceIt(hz,val){
+  if(!val||/\s/.test(val)||[...hz].length<2||!window.pinyinPro)return val;
+  const want=autoSyllables(hz).map(baseOf);
+  if(want.length<2||baseOf(val)!==want.join(''))return val;
+  let out='',k=0,used=0;
+  for(const ch of val){out+=ch;used+=baseOf(ch).length;if(k<want.length-1&&used>=want[k].length){out+=' ';k++;used=0;}}
+  return out;
+}
+async function migratePinyinSpacing(){
+  const todo=S.words.filter(w=>!w.pys&&w.py&&[...w.hz].length>=2&&!/\s/.test(w.py));
+  if(!todo.length)return;
+  if(!(await loadPinyin()))return;
+  let n=0;todo.forEach(w=>{const v=spaceIt(w.hz,w.py);if(v!==w.py){w.py=v;n++;}w.pys=1;});
+  save();tlog('pinyin_spaced',{n,of:todo.length});
+}
 
 /* ---------- drawing ---------- */
 function plant(box,size){size=size||60;const b=Math.max(0,Math.min(7,box|0));
@@ -1045,9 +1072,9 @@ function tabWords(){
       <p class="note">Use ● Record to record a word here, or record a voice memo on your phone and use Add sound. Paused words stay in the list but leave the game.</p>
       <div class="words">${rows||'<p class="muted">No words yet.</p>'}</div></div></div>`;
   $('#addf').onsubmit=e=>{e.preventDefault();const hz=$('#a-hz').value.trim();if(!hz)return;
-    const w=mkWord([hz,$('#a-py').value,$('#a-en').value,$('#a-pic').value,$('#a-sen').value]);w.sample=false;S.words.push(w);save();renderAunty();};
+    const w=mkWord([hz,$('#a-py').value,$('#a-en').value,$('#a-pic').value,$('#a-sen').value]);w.sample=false;S.words.push(w);save();renderAunty();migratePinyinSpacing().then(()=>{if(view==='aunty'&&tab==='words')renderAunty();});};
   $('#bulkadd').onclick=()=>{let n=0;$('#bulk').value.split(/\n/).forEach(line=>{const p=line.split(/\s*[|\t]\s*/);if(p[0]&&p[0].trim()){const w=mkWord([p[0],p[1],p[2],p[3],p[4]]);w.sample=false;S.words.push(w);n++;}});
-    save();renderAunty();$('#bulkmsg').textContent=n?`Added ${n} words.`:'Nothing to add. Put one word per line.';};
+    save();renderAunty();$('#bulkmsg').textContent=n?`Added ${n} words.`:'Nothing to add. Put one word per line.';migratePinyinSpacing().then(()=>{if(view==='aunty'&&tab==='words')renderAunty();});};
   const tb=$('#tabbody');
   bindRec();
   tb.querySelectorAll('[data-rec]').forEach(b=>b.onclick=()=>openRecorder(b.dataset.rec));
@@ -1215,6 +1242,7 @@ async function start(){
   applyFlower();renderNav();renderGarden();show('garden');
   if(location.hash==='#grownups'||location.hash==='#how'){const h2=location.hash;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}if(h2==='#grownups')openGate();else openHow(false);}
   await openDB();await loadAudio();
+  migratePinyinSpacing();
   if(view==='garden')renderGarden();
   tlog('open',{build:BUILD,ua:navigator.userAgent.slice(0,150),scr:`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,win:`${innerWidth}x${innerHeight}`,standalone:homeStandalone(),store:storageOK,idb:idbOK,speech:!!window.speechSynthesis,zh:zhVoice?zhVoice.name+' '+zhVoice.lang:'none',zhN:zhVoices.length,mic:canRecord(),words:S.words.length,active:active().length,rec:S.words.filter(w=>audioURL.has(w.id)).length,level:levelOf(),perDay:S.settings.perDay,len:S.settings.len,seenHow:S.settings.seenHow});
   $('#v-play').addEventListener('click',ev=>{const f=ev.target.closest('#flag');if(!f||!sess)return;const w=cur();
